@@ -1,0 +1,21 @@
+{
+  "message": "It sounds like today is hard. Please talk to a trusted adult.",
+  "resources": [
+    {
+      "name": "Childline (UK)",
+      "contact": "0800 1111 (Free 24/7)"
+    },
+    {
+      "name": "Kids Helpline (Australia)",
+      "contact": "1800 55 1800"
+    },
+    {
+      "name": "Crisis Text Line",
+      "contact": "Text HOME to 741741"
+    },
+    {
+      "name": "National Suicide & Crisis Lifeline (US)",
+      "contact": "Call or Text 988"
+    }
+  ]
+}

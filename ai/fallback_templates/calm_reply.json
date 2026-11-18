@@ -1,0 +1,32 @@
+[
+  {
+    "condition": "angry",
+    "message": "It is completely normal to feel upset. Let's take three slow breaths together.",
+    "suggested_activity": "breathing"
+  },
+  {
+    "condition": "worried",
+    "message": "Big feelings can feel heavy, {child_name}. Shake out your hands and take a breath.",
+    "suggested_activity": "movement"
+  },
+  {
+    "condition": "tired",
+    "message": "Your brain worked hard today. Stretch your arms up to the sky and rest a minute.",
+    "suggested_activity": "stretching"
+  },
+  {
+    "condition": "sad",
+    "message": "It's okay to feel sad right now, {child_name}. You are safe and doing your best.",
+    "suggested_activity": "breathing"
+  },
+  {
+    "condition": "calm",
+    "message": "You're in a great calm space. Keep this gentle rhythm going!",
+    "suggested_activity": "none"
+  },
+  {
+    "condition": "happy",
+    "message": "Love seeing that smile, {child_name}! Let's ride this positive wave!",
+    "suggested_activity": "none"
+  }
+]
