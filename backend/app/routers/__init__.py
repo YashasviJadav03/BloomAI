@@ -9,6 +9,7 @@ from backend.app.routers.safety import router as safety_router
 from backend.app.routers.progress import router as progress_router
 from backend.app.routers.ai import router as ai_router
 from backend.app.routers.dev import router as dev_router
+from backend.app.routers.caregiver import router as caregiver_router
 
 __all__ = [
     "health_router",
@@ -21,5 +22,6 @@ __all__ = [
     "safety_router",
     "progress_router",
     "ai_router",
-    "dev_router"
+    "dev_router",
+    "caregiver_router"
 ]

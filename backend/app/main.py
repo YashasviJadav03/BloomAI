@@ -15,7 +15,8 @@ from backend.app.routers import (
     safety_router,
     progress_router,
     ai_router,
-    dev_router
+    dev_router,
+    caregiver_router
 )
 
 @asynccontextmanager
@@ -27,12 +28,11 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[Warning] Auto-seed on startup encountered: {e}")
     yield
-    # Shutdown logic (if any)
 
 app = FastAPI(
     title=APP_NAME,
     version=APP_VERSION,
-    description="Backend API service for BloomAI prototype child assistant",
+    description="Backend API service for BloomAI ADHD child assistant & caregiver insights",
     lifespan=lifespan
 )
 
@@ -57,6 +57,7 @@ app.include_router(safety_router)
 app.include_router(progress_router)
 app.include_router(ai_router)
 app.include_router(dev_router)
+app.include_router(caregiver_router)
 
 if __name__ == "__main__":
     import uvicorn

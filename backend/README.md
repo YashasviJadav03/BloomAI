@@ -1,17 +1,28 @@
 # BloomAI Backend Service
 
-FastAPI-powered backend for the BloomAI child task and routine assistant.
+FastAPI-powered backend for the BloomAI child ADHD assistant & caregiver insights platform.
 
-## Features
-- **Profile Management**: Single child profile (name, avatar, favourite rewards).
-- **Picture Schedules & Micro-steps**: CRUD, template cloning, custom icons & colors, one-step-at-a-time task tracking.
-- **Never-Forget Checklists**: Daily pack-up checklists with reset and item toggling.
+## Key Capabilities (Aligned with Instructor Guidelines)
+- **Profile Management**: Single child profile (name, avatar, favourite rewards, target focus minutes).
+- **Picture Schedules & Micro-steps**: CRUD, template cloning, custom icons & colors, one-step-at-a-time task execution.
+- **Never-Forget Checklists**: Daily pack-up checklists with reset and item toggling for ADHD forgetfulness reduction.
 - **Task Sessions & Gamification**: Active task tracking, automatic points allocation (+5 per step, +10 bonus per session completion), and streak calculation.
-- **Child-Friendly Emotion & Focus Scoring**: Rule-based score (0–100) combining emoji state, text sentiment keywords, speech volume, speaking pace, and task duration vs. expected time.
-- **Distress Safety Guardrail**: Deterministic keyword scanner triggering `safe_mode` and helpline resources when distress phrases are detected.
+- **Multimodal ADHD Check-ins (Text, Audio & On-device Video)**:
+  - Text sentiment tokens.
+  - Audio feature extraction (average volume, peak volume, words-per-minute pace).
+  - On-device video fidget analysis (`fidget_score` 0.0–1.0, `face_present` boolean).
+  - **Privacy Guarantee:** Extracted numerical features only; zero raw audio or video stored or transmitted.
+- **Dual-Action Distress Safety Guardrail**:
+  - Deterministic self-critical keyword scanner triggering `safe_mode=True`.
+  - Automatically logs a `CaregiverAlert` with trigger text and emotion score for parent/teacher notification.
+- **Plain-Language Caregiver & Clinical Insights (`/api/caregiver/insights`)**:
+  - Synthesizes focus endurance patterns (spotting the 12-minute fatigue threshold).
+  - Analyzes checklist compliance and forgetfulness trends.
+  - Generates plain-language clinical observations for parents, teachers, and clinicians.
+- **Personalised Routine Recommendations (`/api/support/recommendations`)**:
+  - Delivers tailored task duration caps (e.g., 10-minute maximums) and 2-minute movement micro-breaks.
 - **AI Praise & Calm Coaching**: Effort-based positive praise and calm-down coaching with built-in template fallbacks (zero API key requirement).
-- **Progress Tracking**: Daily mood and focus charts and streak summaries.
-- **Demo Seeding**: 1-click endpoint seeding 14 days of realistic historical demo data.
+- **Demo Seeding (`/api/dev/seed-demo`)**: 1-click endpoint seeding 14 days of realistic ADHD pattern data.
 
 ## Getting Started
 
@@ -45,7 +56,7 @@ pytest backend/tests -v
 ```
 
 ### 5. Seeding Demo Data
-To inject 14 days of realistic sample check-ins, streaks, points, and schedules for demo presentations:
+To inject 14 days of realistic sample check-ins, ADHD focus dips, pack-up checklists, streaks, points, and caregiver alerts:
 ```bash
 curl -X POST http://localhost:8000/api/dev/seed-demo
 ```

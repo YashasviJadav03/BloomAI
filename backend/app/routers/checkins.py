@@ -3,7 +3,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 from backend.app.database import get_db
-from backend.app.models.checkin import CheckInModel
+from backend.app.models.checkin import CheckInModel, CaregiverAlertModel
 from backend.app.models.session import SessionModel
 from backend.app.schemas.checkin import CheckInCreate, CheckInResponse
 from backend.app.scoring.formula import compute_scores_and_label, calculate_emotion_score
@@ -28,21 +28,21 @@ def submit_checkin(payload: CheckInCreate, db: Session = Depends(get_db)):
     prelim_emotion = calculate_emotion_score(payload.emoji, payload.text, payload.audio_features)
     safe_mode = evaluate_distress(payload.text, prelim_emotion)
 
-    # 2. Compute full scoring and state label
+    # 2. Compute full scoring and state label (incorporating audio & on-device video fidget features)
     focus_score, emotion_score, label = compute_scores_and_label(
         emoji=payload.emoji,
         text=payload.text,
         audio=payload.audio_features,
+        video=payload.video_features,
         duration_seconds=duration_seconds,
         expected_seconds=expected_seconds,
         safe_mode=safe_mode
     )
 
-    # If distress was triggered, ensure safe_mode flag and label
     if safe_mode:
         label = "distressed"
 
-    # 3. Save extracted features to database (never store raw audio)
+    # 3. Save extracted features to database (never store raw audio or raw video)
     checkin = CheckInModel(
         session_id=payload.session_id,
         emoji=payload.emoji,
@@ -51,6 +51,8 @@ def submit_checkin(payload: CheckInCreate, db: Session = Depends(get_db)):
         peak_volume=payload.audio_features.peak_volume if payload.audio_features else None,
         words_per_minute=payload.audio_features.words_per_minute if payload.audio_features else None,
         audio_duration_seconds=payload.audio_features.duration_seconds if payload.audio_features else None,
+        fidget_score=payload.video_features.fidget_score if payload.video_features else None,
+        face_present=payload.video_features.face_present if payload.video_features else True,
         focus_score=focus_score,
         emotion_score=emotion_score,
         label=label,
@@ -58,6 +60,19 @@ def submit_checkin(payload: CheckInCreate, db: Session = Depends(get_db)):
         created_at=datetime.utcnow()
     )
     db.add(checkin)
+    db.flush()
+
+    # 4. If distress is triggered, alert the caregiver by logging a CaregiverAlert
+    if safe_mode:
+        alert = CaregiverAlertModel(
+            checkin_id=checkin.id,
+            trigger_text=payload.text,
+            emotion_score=emotion_score,
+            is_acknowledged=False,
+            created_at=datetime.utcnow()
+        )
+        db.add(alert)
+
     db.commit()
     db.refresh(checkin)
 

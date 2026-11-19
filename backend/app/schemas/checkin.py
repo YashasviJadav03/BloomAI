@@ -8,11 +8,17 @@ class AudioFeatures(BaseModel):
     words_per_minute: Optional[float] = 120.0
     duration_seconds: Optional[float] = 5.0
 
+class VideoFeatures(BaseModel):
+    fidget_score: Optional[float] = 0.2  # 0.0 (still) to 1.0 (high restlessness/fidgeting)
+    face_present: Optional[bool] = True
+    duration_seconds: Optional[float] = 5.0
+
 class CheckInCreate(BaseModel):
     session_id: Optional[int] = None
     emoji: str  # happy, calm, tired, sad, worried, angry
     text: Optional[str] = None
     audio_features: Optional[AudioFeatures] = None
+    video_features: Optional[VideoFeatures] = None
 
 class CheckInResponse(BaseModel):
     id: int

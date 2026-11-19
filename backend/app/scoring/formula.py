@@ -1,5 +1,5 @@
 from typing import Optional, Tuple
-from backend.app.schemas.checkin import AudioFeatures
+from backend.app.schemas.checkin import AudioFeatures, VideoFeatures
 from backend.app.scoring.sentiment_lexicon import POSITIVE_WORDS, NEGATIVE_WORDS
 
 EMOJI_BASE_SCORES = {
@@ -52,7 +52,8 @@ def calculate_focus_score(
     emotion_score: int,
     duration_seconds: Optional[int] = None,
     expected_seconds: Optional[int] = None,
-    audio: Optional[AudioFeatures] = None
+    audio: Optional[AudioFeatures] = None,
+    video: Optional[VideoFeatures] = None
 ) -> int:
     base_focus = 75.0
     
@@ -79,6 +80,18 @@ def calculate_focus_score(
     if audio and (audio.peak_volume or 0.0) > 0.9:
         focus -= 10
 
+    # On-Device Video Restlessness (ADHD Fidget / Gaze Detection)
+    if video and hasattr(video, "fidget_score"):
+        fidget = video.fidget_score if video.fidget_score is not None else 0.2
+        face_present = video.face_present if video.face_present is not None else True
+
+        if not face_present:
+            focus -= 15
+        elif fidget > 0.6:  # High restlessness/fidgeting
+            focus -= 12
+        elif fidget <= 0.25 and face_present:
+            focus += 5
+
     return clamp(focus)
 
 
@@ -102,11 +115,18 @@ def compute_scores_and_label(
     emoji: str,
     text: Optional[str] = None,
     audio: Optional[AudioFeatures] = None,
+    video: Optional[VideoFeatures] = None,
     duration_seconds: Optional[int] = None,
     expected_seconds: Optional[int] = None,
     safe_mode: bool = False
 ) -> Tuple[int, int, str]:
+    # Handle backward-compatible positional calling where 4th argument is duration_seconds
+    if isinstance(video, (int, float)):
+        expected_seconds = duration_seconds
+        duration_seconds = int(video)
+        video = None
+
     emotion = calculate_emotion_score(emoji, text, audio)
-    focus = calculate_focus_score(emotion, duration_seconds, expected_seconds, audio)
+    focus = calculate_focus_score(emotion, duration_seconds, expected_seconds, audio, video)
     label = determine_label(emotion, focus, emoji, safe_mode)
     return focus, emotion, label

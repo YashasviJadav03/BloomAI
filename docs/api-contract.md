@@ -154,7 +154,7 @@
 
 ---
 
-## 7. Check-ins, Scoring & Distress Safety
+## 7. Multimodal Check-ins, Scoring & Distress Safety
 - `POST /api/checkins`
   - Body:
     ```json
@@ -167,6 +167,11 @@
         "peak_volume": 0.9,
         "words_per_minute": 170.0,
         "duration_seconds": 12.0
+      },
+      "video_features": {
+        "fidget_score": 0.65,
+        "face_present": true,
+        "duration_seconds": 5.0
       }
     }
     ```
@@ -177,10 +182,11 @@
       "focus_score": 42,
       "emotion_score": 35,
       "label": "frustrated",
-      "safe_mode": false
+      "safe_mode": false,
+      "created_at": "2026-11-24T07:35:00Z"
     }
     ```
-  - *Note:* If `safe_mode == true`, child frontend transitions immediately to `/safe-mode` and avoids calling calm-reply.
+  - *Note:* If `safe_mode == true`, child frontend transitions immediately to `/safe-mode` AND logs an alert in Caregiver Alerts.
 - `GET /api/checkins?days=7`: Get recent check-in list.
 
 ---
@@ -242,27 +248,52 @@
 
 ---
 
-## 10. Progress Page
-- `GET /api/progress/summary`
+## 10. Progress Page (Child View)
+- `GET /api/progress/summary`: Points, streaks, today/week tasks done.
+- `GET /api/progress/mood?days=7`: Day-by-day emotional and focus averages for Recharts.
+
+---
+
+## 11. Caregiver & Clinical Plain-Language Insights
+- `GET /api/caregiver/insights?days=7`
   - Response `200`:
     ```json
     {
-      "total_points": 55,
-      "current_streak": 3,
-      "best_streak": 5,
-      "tasks_completed_today": 2,
-      "tasks_completed_week": 9
+      "child_name": "Aarav",
+      "time_range_days": 7,
+      "focus_pattern": {
+        "avg_focus_score": 68,
+        "optimal_task_duration_minutes": 10,
+        "restlessness_onset_minutes": 12,
+        "summary": "Aarav's focus peaks in 10-minute bursts during visual routines. Restlessness noticeably rises past minute 12 on longer sedentary tasks."
+      },
+      "forgetfulness_pattern": {
+        "checklist_completion_rate": 86,
+        "most_forgotten_items": ["Water bottle", "Math notebook"],
+        "summary": "Pack-up checklist adherence is currently at 86%."
+      },
+      "emotional_regulation": {
+        "dominant_mood": "calm",
+        "calm_recovery_rate": 90,
+        "summary": "Most frequent emotional state is 'calm'."
+      },
+      "clinical_summary": "Aarav responds well to short, segmented micro-steps (under 10 minutes) with instant positive reinforcement.",
+      "active_alerts_count": 0
     }
     ```
-- `GET /api/progress/mood?days=7`
+- `GET /api/caregiver/alerts`
+  - Response `200`: Array of active distress alerts with trigger phrase and timestamp.
+- `POST /api/caregiver/alerts/{id}/acknowledge`
+  - Response `200`: Marks alert acknowledged by caregiver.
+- `GET /api/support/recommendations`
   - Response `200`:
     ```json
-    [
-      {
-        "date": "2026-11-24",
-        "avg_emotion_score": 62,
-        "avg_focus_score": 55,
-        "checkins": 3
-      }
-    ]
+    {
+      "recommended_max_task_seconds": 600,
+      "suggested_micro_break_seconds": 120,
+      "recommendations": [
+        "Cap individual homework tasks at 10 minutes to minimize distraction.",
+        "Offer a 2-minute movement or breathing micro-break when transitioning between tasks."
+      ]
+    }
     ```

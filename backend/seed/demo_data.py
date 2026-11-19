@@ -7,16 +7,18 @@ from backend.app.models.profile import ProfileModel, UserStatsModel
 from backend.app.models.schedule import TemplateModel, ScheduleModel, TaskModel, StepModel
 from backend.app.models.checklist import ChecklistModel, ChecklistItemModel
 from backend.app.models.session import SessionModel, StepCompletionModel
-from backend.app.models.checkin import CheckInModel
+from backend.app.models.checkin import CheckInModel, CaregiverAlertModel
 from backend.seed.presets import SCHEDULE_TEMPLATES, CHECKLIST_TEMPLATES
 
 def seed_demo_environment(db: Session) -> dict:
     """
     Clears existing dynamic state and seeds 14 days of realistic historical activity,
-    sessions, completed steps, points, streaks, and check-in mood records.
-    Highlights a realistic demo scenario: steady focus that dips around 12 minutes on hard homework.
+    sessions, completed steps, points, streaks, video/audio check-in records,
+    and caregiver distress alerts.
+    Highlights the ADHD pattern: focus fatigue and video fidget rise past 12 minutes on sedentary homework.
     """
     # Clear tables
+    db.query(CaregiverAlertModel).delete()
     db.query(CheckInModel).delete()
     db.query(StepCompletionModel).delete()
     db.query(SessionModel).delete()
@@ -111,23 +113,22 @@ def seed_demo_environment(db: Session) -> dict:
             checklist_id=bag_chk.id,
             text=i_data["text"],
             icon=i_data["icon"],
-            is_checked=(i_idx <= 2),  # first 2 checked for demo
+            is_checked=(i_idx <= 3),  # 3 of 5 items checked
             order=i_idx
         )
         db.add(item)
     db.commit()
 
-    # 6. Seed 14 days of realistic sessions and check-in history
+    # 6. Seed 14 days of realistic sessions, multimodal check-ins, and ADHD patterns
     now = datetime.utcnow()
     emojis = ["happy", "calm", "happy", "calm", "tired", "worried"]
     for day_offset in range(13, -1, -1):
         day_date = now - timedelta(days=day_offset)
-        # Create 1-2 sessions on this day
         sample_task = all_tasks[day_offset % len(all_tasks)]
         session = SessionModel(
             task_id=sample_task.id,
             started_at=day_date.replace(hour=8, minute=0, second=0),
-            ended_at=day_date.replace(hour=8, minute=random.randint(12, 18), second=0),
+            ended_at=day_date.replace(hour=8, minute=random.randint(10, 16), second=0),
             duration_seconds=random.randint(110, 160),
             expected_seconds=sample_task.expected_seconds,
             bonus_points=10,
@@ -136,24 +137,30 @@ def seed_demo_environment(db: Session) -> dict:
         db.add(session)
         db.flush()
 
-        # Seed checkin for this day
         selected_emoji = random.choice(emojis)
         base_emotion = 80 if selected_emoji in ["happy", "calm"] else 45
         base_focus = 75 if selected_emoji in ["happy", "calm"] else 50
-        # Demonstrate subtle dip at 12 min
+        fidget = 0.2
+        face_pres = True
+
+        # ADHD Restlessness Pattern: On days 3, 7, and 10, demonstrate 12-minute fatigue & video fidgeting
         if day_offset in [3, 7, 10]:
             selected_emoji = "tired"
             base_emotion = 48
             base_focus = 42
+            fidget = 0.72  # High restlessness detected on-device
+            face_pres = True
 
         checkin = CheckInModel(
             session_id=session.id,
             emoji=selected_emoji,
-            text="Finished my morning steps!" if base_emotion > 60 else "Math was a bit long today",
+            text="Finished my morning routine!" if base_emotion > 60 else "Math was a bit long and I got fidgety",
             avg_volume=0.35,
             peak_volume=0.6,
             words_per_minute=115.0,
             audio_duration_seconds=6.0,
+            fidget_score=fidget,
+            face_present=face_pres,
             focus_score=base_focus,
             emotion_score=base_emotion,
             label="flow" if base_emotion > 70 else ("tired" if selected_emoji == "tired" else "calm"),
@@ -162,5 +169,20 @@ def seed_demo_environment(db: Session) -> dict:
         )
         db.add(checkin)
 
+    # 7. Seed 1 sample Caregiver Distress Alert for demonstration
+    sample_alert = CaregiverAlertModel(
+        checkin_id=None,
+        trigger_text="Demo Alert: Aarav said 'I can't do this homework' during 15-min math block.",
+        emotion_score=22,
+        is_acknowledged=False,
+        created_at=now - timedelta(days=2, hours=3)
+    )
+    db.add(sample_alert)
+
     db.commit()
-    return {"message": "Demo data seeded successfully", "days_seeded": 14, "profile": "Aarav"}
+    return {
+        "message": "Demo data seeded successfully",
+        "days_seeded": 14,
+        "profile": "Aarav",
+        "active_alerts": 1
+    }
