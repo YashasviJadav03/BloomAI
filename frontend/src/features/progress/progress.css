@@ -1,0 +1,39 @@
+/* Chart colour roles. Series colours come from the validated reference palette
+   (blue / orange, slots 1-2; passes CVD and contrast checks in light and dark). */
+.bloom-progress {
+  --viz-surface: #fcfcfb;
+  --viz-text-primary: #0b0b0b;
+  --viz-text-secondary: #52514e;
+  --viz-grid: #e4e3df;
+  --viz-series-mood: #2a78d6;
+  --viz-series-focus: #eb6834;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .bloom-progress {
+    --viz-surface: #1a1a19;
+    --viz-text-primary: #f0efec;
+    --viz-text-secondary: #c3c2b7;
+    --viz-grid: #3a3936;
+    --viz-series-mood: #3987e5;
+    --viz-series-focus: #d95926;
+  }
+}
+:root[data-theme="dark"] .bloom-progress {
+  --viz-surface: #1a1a19;
+  --viz-text-primary: #f0efec;
+  --viz-text-secondary: #c3c2b7;
+  --viz-grid: #3a3936;
+  --viz-series-mood: #3987e5;
+  --viz-series-focus: #d95926;
+}
+
+.bloom-progress {
+  color: var(--viz-text-primary);
+}
+.bloom-progress .viz-card {
+  background: var(--viz-surface);
+  color: var(--viz-text-primary);
+}
+.bloom-progress .viz-muted {
+  color: var(--viz-text-secondary);
+}
