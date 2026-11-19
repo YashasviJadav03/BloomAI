@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 /** Wall-clock based countdown (does not drift if the tab is throttled). */
 export function useCountdown(totalSeconds: number, running: boolean, onDone?: () => void) {
@@ -28,22 +28,23 @@ export function useCountdown(totalSeconds: number, running: boolean, onDone?: ()
 
 export const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
-/** Big visual countdown: a ring that empties, plus the time. Colour warms (never alarms) near the end. */
-export function CountdownRing({ total, remaining, size = 220, label }: { total: number; remaining: number; size?: number; label?: string }) {
+/** Big visual countdown: a ring that empties plus the time. Colour moves green -> blue -> warm orange (never red). */
+export function CountdownRing({ total, remaining, size = 220, label, children }: { total: number; remaining: number; size?: number; label?: string; children?: ReactNode }) {
   const r = 90, c = 2 * Math.PI * r
   const frac = total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0
   const color = frac > 0.5 ? 'var(--color-sage)' : frac > 0.2 ? 'var(--color-sky)' : 'var(--color-sun)'
   const minsLeft = Math.ceil(remaining / 60)
   return (
-    <div role="timer" aria-label={label ?? `About ${minsLeft} minute${minsLeft === 1 ? '' : 's'} left`} className="relative mx-auto" style={{ width: size, height: size }}>
+    <div role="timer" aria-label={`About ${minsLeft} minute${minsLeft === 1 ? '' : 's'} left`} className="relative mx-auto" style={{ width: size, height: size }}>
       <svg viewBox="0 0 200 200" width={size} height={size} aria-hidden>
-        <circle cx="100" cy="100" r={r} fill="none" stroke="var(--color-line)" strokeWidth="16" />
-        <circle cx="100" cy="100" r={r} fill="none" stroke={color} strokeWidth="16" strokeLinecap="round"
+        <circle cx="100" cy="100" r={r} fill="var(--color-card)" stroke="var(--color-lav-soft)" strokeWidth="14" />
+        <circle cx="100" cy="100" r={r} fill="none" stroke={color} strokeWidth="14" strokeLinecap="round"
           strokeDasharray={c} strokeDashoffset={c * (1 - frac)} transform="rotate(-90 100 100)" style={{ transition: 'stroke-dashoffset 0.4s linear, stroke 0.6s' }} />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-5xl font-extrabold tabular-nums">{fmt(remaining)}</span>
-        {label && <span className="mt-1 text-base text-ink-soft">{label}</span>}
+        {children}
+        <span className="font-extrabold tabular-nums" style={{ fontSize: size * 0.2 }}>{fmt(remaining)}</span>
+        {label && <span className="text-base font-bold text-ink-soft">{label}</span>}
       </div>
     </div>
   )

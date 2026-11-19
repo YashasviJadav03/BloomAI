@@ -6,7 +6,9 @@ import { PageShell } from '../components/PageShell'
 import { BigButton, ColorPicker, ConfirmDialog, EmptyState, ErrorState, Field, IconButton, IconPicker, Loading, Modal, inputClass } from '../components/ui'
 import { useAsync } from '../hooks/useAsync'
 import { getDoneToday } from '../lib/doneToday'
-import { Icon, tint } from '../theme/icons'
+import { IconTile, tint } from '../theme/icons'
+import { Bloomi } from '../components/mascot/Bloomi'
+import { DailyJourney } from '../components/journey/DailyJourney'
 
 export default function SchedulePage() {
   const sid = Number(useParams().id)
@@ -45,32 +47,34 @@ export default function SchedulePage() {
 
   const firstTodo = sched.tasks.find((t) => !done.includes(t.id))
   return (
-    <PageShell title={`${sched.name}`} backTo="/" tint={tint(sched.color, 0.6)}
+    <PageShell title={sched.name} subtitle={editing ? 'Edit mode' : undefined} backTo="/"
       right={<BigButton size="sm" variant={editing ? 'primary' : 'secondary'} onClick={() => setEditing((e) => !e)} aria-pressed={editing}>{editing ? '✓ Done' : '✏️ Edit'}</BigButton>}>
       {err && <p role="alert" className="mb-3 rounded-btn bg-berry-light p-3 font-bold">{err}</p>}
 
       {sched.tasks.length === 0 ? (
-        <EmptyState icon={sched.icon} title="Nothing here yet" hint="Add the things you do, in the order you do them." action={<BigButton onClick={addTask} icon="star">Add a task</BigButton>} />
+        <EmptyState pose="thinking" title="Nothing here yet" hint="Add the things you do, in the order you do them." action={<BigButton onClick={addTask} icon="star">Add a task</BigButton>} />
+      ) : !editing ? (
+        <DailyJourney schedule={sched} doneIds={done}
+          action={(t) => <BigButton size="lg" variant="sun" className="w-full" icon="rocket" onClick={() => nav(`/schedule/${sid}/task/${t.id}`)}>Start</BigButton>} />
       ) : (
-        <ol className="flex flex-col gap-4">
+        <ol className="flex flex-col gap-3">
           {sched.tasks.map((t, i) => {
             const isDone = done.includes(t.id)
             const card = (
               <>
-                <span className="flex h-10 w-10 min-w-10 items-center justify-center rounded-full bg-white/80 text-lg font-extrabold">{isDone ? '✅' : i + 1}</span>
-                <Icon name={t.icon} className="text-5xl sm:text-6xl" />
+                <IconTile name={t.icon} color={sched.color} />
                 <span className="min-w-0 flex-1">
-                  <span className="block text-2xl font-extrabold">{t.title}</span>
-                  <span className="text-ink-soft">about {Math.max(1, Math.round(t.expected_seconds / 60))} min · {t.steps.length} step{t.steps.length === 1 ? '' : 's'}</span>
+                  <span className="block truncate text-xl font-extrabold">{t.title}</span>
+                  <span className="text-base text-ink-soft">about {Math.max(1, Math.round(t.expected_seconds / 60))} min · {t.steps.length} step{t.steps.length === 1 ? '' : 's'}{isDone ? ' · done today' : ''}</span>
                 </span>
               </>
             )
-            const style = { background: tint(sched.color, isDone ? 0.93 : 0.8), borderColor: sched.color }
+            const style = { borderColor: tint(sched.color, 0.5) }
             return (
               <li key={t.id} className="flex items-stretch gap-2">
                 {editing ? (
                   <>
-                    <div style={style} className="flex min-w-0 flex-1 items-center gap-3 rounded-card border-4 p-4">{card}</div>
+                    <div style={style} className="flex min-w-0 flex-1 items-center gap-3 rounded-card border-2 bg-card p-3 shadow-soft">{card}</div>
                     <div className="flex flex-col justify-between gap-1">
                       <div className="flex gap-1">
                         <IconButton label={`Move ${t.title} up`} disabled={i === 0} onClick={() => void move(i, -1)}>▲</IconButton>
@@ -84,7 +88,7 @@ export default function SchedulePage() {
                   </>
                 ) : (
                   <Link to={`/schedule/${sid}/task/${t.id}`} style={style}
-                    className="flex min-h-28 flex-1 items-center gap-4 rounded-card border-4 p-4 transition-transform hover:scale-[1.01] active:scale-[0.98]">{card}</Link>
+                    className="flex min-h-20 flex-1 items-center gap-4 rounded-card border-2 bg-card p-3">{card}</Link>
                 )}
               </li>
             )
@@ -98,12 +102,11 @@ export default function SchedulePage() {
           <BigButton variant="secondary" onClick={() => setMeta(true)} icon="paint">Change name, colour and picture</BigButton>
           <BigButton variant="danger" onClick={() => setRemoveSched(true)}>Delete this schedule</BigButton>
         </div>
-      ) : firstTodo ? (
-        <BigButton size="lg" className="mt-6 w-full" onClick={() => nav(`/schedule/${sid}/task/${firstTodo.id}`)} icon="check">
-          {done.length ? 'Next: ' : 'Start: '}{firstTodo.title}
-        </BigButton>
-      ) : sched.tasks.length > 0 ? (
-        <p className="mt-6 text-center text-2xl font-extrabold text-sage-dark">🎉 All done for today!</p>
+      ) : sched.tasks.length > 0 && !firstTodo ? (
+        <div className="mt-4 flex items-center gap-4 rounded-card bg-mint-soft p-4">
+          <Bloomi pose="sleepy" size={90} />
+          <p className="text-xl font-extrabold text-sage-dark">All done for today. Time to rest!</p>
+        </div>
       ) : null}
 
       <ScheduleMetaModal open={meta} onClose={() => setMeta(false)} initial={{ name: sched.name, color: sched.color, icon: sched.icon }}

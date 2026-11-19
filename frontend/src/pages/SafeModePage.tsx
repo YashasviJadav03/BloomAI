@@ -4,6 +4,7 @@ import type { SafetyResources } from '../api/types'
 import { PageShell } from '../components/PageShell'
 import { BigButton, Card, Loading } from '../components/ui'
 import { useAsync } from '../hooks/useAsync'
+import { Bloomi } from '../components/mascot/Bloomi'
 
 // Shown if the server can't be reached: this screen must NEVER be blocked by an error.
 const FALLBACK: SafetyResources = {
@@ -21,12 +22,12 @@ export default function SafeModePage() {
   const { data, loading } = useAsync(() => api.safetyResources().catch(() => FALLBACK))
   const res = data ?? FALLBACK
   return (
-    <PageShell title="" hideHeaderExtras>
+    <PageShell title="" mode="plain">
       {loading ? <Loading label="One moment…" /> : (
-        <div className="flex flex-col items-center gap-6 text-center">
-          <div className="text-8xl" aria-hidden>🧡</div>
-          <h2 className="text-4xl font-extrabold">You're not alone</h2>
-          <p className="text-2xl font-bold" role="status">{res.message}</p>
+        <div className="mx-auto flex max-w-xl flex-col items-center gap-6 text-center">
+          <Bloomi pose="calm" arms="hug" size={130} animate="none" />
+          <h1 className="text-4xl font-extrabold text-lav-ink">You're not alone</h1>
+          <p className="text-2xl font-bold leading-snug" role="status">{res.message}</p>
           <Card className="w-full text-left">
             <p className="mb-2 text-xl font-extrabold">A trusted adult can be:</p>
             <ul className="list-inside list-disc space-y-1 text-xl">
@@ -53,7 +54,7 @@ export default function SafeModePage() {
             </Card>
           )}
           <div className="flex w-full flex-col gap-3">
-            <BigButton size="lg" onClick={() => nav('/calm')} icon="cloud">Take a calm breath</BigButton>
+            <BigButton size="lg" variant="soft" onClick={() => nav('/calm')} icon="cloud">Take a calm breath</BigButton>
             <BigButton variant="secondary" onClick={() => nav('/')}>I've talked to someone</BigButton>
           </div>
         </div>

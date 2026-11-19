@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import { AppProvider } from './hooks/app'
 import { SettingsProvider } from './hooks/settings'
+import '@fontsource-variable/nunito'
 import './index.css'
 
 createRoot(document.getElementById('root')!).render(

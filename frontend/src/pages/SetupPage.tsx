@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../api/client'
 import { BigButton, Field, inputClass } from '../components/ui'
 import { useApp } from '../hooks/app'
+import { Bloomi } from '../components/mascot/Bloomi'
 import { AVATARS, REWARDS } from '../theme/icons'
 
 /** First launch: name, avatar, favourite rewards. Also used to edit the profile (?edit=1). */
@@ -39,39 +40,39 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-gradient-to-b from-sage-light to-cream">
+    <div className="min-h-dvh">
       <main className="mx-auto max-w-xl px-4 py-8 animate-fade-in">
-        <div className="mb-6 text-center">
-          <div className="text-7xl animate-wiggle" aria-hidden>🌱</div>
-          <h1 className="mt-2 text-4xl font-extrabold">{editing ? 'My profile' : 'Hi! Let\'s get started'}</h1>
-          {!editing && <p className="mt-1 text-lg text-ink-soft">Tell me a bit about you.</p>}
+        <div className="mb-6 flex flex-col items-center text-center">
+          <Bloomi pose="welcome" arms="wave" size={editing ? 120 : 170} animate="wave" />
+          <h1 className="mt-2 text-4xl font-extrabold text-lav-ink">{editing ? 'My profile' : "Hi! I'm Bloomi"}</h1>
+          {!editing && <p className="mt-1 text-xl text-ink-soft">I will help you focus, one small step at a time. What is your name?</p>}
         </div>
-        <form onSubmit={submit} className="rounded-card border-2 border-line bg-card p-6">
-          <Field label="What's your name?">
+        <form onSubmit={submit} className="rounded-card border border-line bg-card p-6 shadow-soft">
+          <Field label="Your name">
             <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} placeholder="Type your name" maxLength={30} autoFocus autoComplete="off" />
           </Field>
-          <fieldset className="mb-5">
+          <fieldset className="mb-6">
             <legend className="mb-2 text-base font-bold text-ink-soft">Pick your buddy</legend>
-            <div role="radiogroup" className="grid grid-cols-5 gap-2">
+            <div role="radiogroup" aria-label="Your buddy" className="grid grid-cols-5 gap-2">
               {Object.entries(AVATARS).map(([k, ch]) => (
                 <button type="button" key={k} role="radio" aria-checked={avatar === k} aria-label={k} onClick={() => setAvatar(k)}
-                  className={`aspect-square rounded-2xl border-2 text-4xl ${avatar === k ? 'border-sage bg-sage-light' : 'border-line bg-cream hover:bg-sage-light'}`}>{ch}</button>
+                  className={`flex aspect-square min-h-14 items-center justify-center rounded-2xl border-2 text-4xl transition-transform ${avatar === k ? 'scale-105 border-lav-deep bg-lav-soft shadow-soft' : 'border-line bg-cream hover:bg-lav-mist'}`}>{ch}</button>
               ))}
             </div>
           </fieldset>
           <fieldset className="mb-6">
-            <legend className="mb-1 text-base font-bold text-ink-soft">Pick up to 3 favourite rewards</legend>
+            <legend className="mb-1 text-base font-bold text-ink-soft">Pick up to 3 favourite rewards ({rewards.length}/3)</legend>
             <div className="grid grid-cols-4 gap-2">
               {Object.entries(REWARDS).map(([k, ch]) => {
                 const on = rewards.includes(k)
                 return (
                   <button type="button" key={k} aria-pressed={on} aria-label={k} onClick={() => toggleReward(k)}
-                    className={`aspect-square rounded-2xl border-2 text-4xl ${on ? 'border-sun bg-sun-light' : 'border-line bg-cream hover:bg-sun-light'}`}>{ch}</button>
+                    className={`flex aspect-square min-h-14 items-center justify-center rounded-2xl border-2 text-4xl ${on ? 'border-sun-deep bg-sun-light' : 'border-line bg-cream hover:bg-sun-light'}`}>{ch}</button>
                 )
               })}
             </div>
           </fieldset>
-          {error && <p role="alert" className="mb-3 font-bold text-danger">{error}</p>}
+          {error && <p role="alert" className="mb-3 font-bold text-berry">{error}</p>}
           <BigButton type="submit" size="lg" className="w-full" disabled={busy}>{busy ? 'Saving…' : editing ? 'Save' : "Let's go!"}</BigButton>
           {editing && <BigButton type="button" variant="ghost" className="mt-2 w-full" onClick={() => nav(-1)}>Cancel</BigButton>}
         </form>

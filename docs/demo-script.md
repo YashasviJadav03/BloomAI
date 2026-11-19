@@ -1,15 +1,16 @@
-# Frontend demo script (about 4 minutes)
+# Frontend demo script (about 5 minutes)
 
-Setup: `npm run dev` (mock mode needs no server). Settings (⚙) > Demo tools > "Reset everything". Use an adult role-playing a child.
+Setup: `cd frontend && npm install && npm run dev`. Mock mode needs no server. For real mode: start the backend (`uvicorn backend.app.main:app` from the repo root), then run the frontend with `VITE_API_MODE=real`. To get sample data: Settings (⚙) > Demo tools > load demo data. Use an adult role-playing a child.
 
-1. **First launch** (20s): type a name, pick a buddy and 2-3 rewards. "No login, one child."
-2. **Home** (20s): big colour-coded cards. Open *Morning*.
-3. **Picture schedule** (30s): numbered tasks, icons, minutes. Tap *Edit*: move a task up, rename, add a step, remove one. Tap *Done*.
-4. **One step at a time** (60s): start *Brush teeth*. One big picture and sentence per screen, visual timer, progress dots. Tap *Done!*: instant stars, sound, praise line (LLM text or template fallback). Show the mute toggle in ⚙.
-5. **Finish and transition** (30s): bonus points, "You did it". *Next:* shows the get-ready countdown. Mention that over time shows "take your time", never failure.
-6. **Never forget** (30s): *My checklists*, tick everything: "All packed!" Show the pack-up reminder banner by setting the reminder time to now (Edit).
-7. **Calm break** (30s): the 🫧 Calm button is on every screen. Breathing bubble, then *Move* prompts.
-8. **Safe mode** (20s): open `/safe` (or trigger it from Member C's check-in by typing a self-critical phrase). Coaching pauses, trusted adult plus helpline. It still loads if the server is off.
-9. **Accessibility** (20s): ⚙ text size A++, calm screen (less movement), keyboard Tab shows focus ring.
+1. **First launch** (20s): Bloomi says hi. Type a name, pick a buddy and up to 3 rewards. "No login, one child."
+2. **Home** (40s): Bloomi greets. "My day" shows a gentle journey: done, current, and what is next. One big *Start* button. Other routines, pack-up lists, a small garden summary.
+3. **Schedule** (30s): *See the whole routine*. Tap ✏️ Edit: move a task, rename, add or remove a step. Tap *Done*.
+4. **Focus session** (70s): *Start*. Ready screen shows the steps. In the session only the timer, one step and one big *Done!* remain; navigation is hidden. Tap *Done!*: points, sound, praise (LLM text or template). Show the mute toggle in ⚙. The timer goes green, blue, warm orange, never red.
+5. **Finish** (30s): "You did it!", then the next-task transition. A new garden item shows "New in your garden".
+6. **Check-in** (40s): *How did that feel?* Pick a face, add text. Bloomi replies with a calm message. Type a self-critical phrase to show safe mode, with no calm-reply.
+7. **My Garden** (60s): the Focus Garden grows with real points and streaks (labelled as visual rewards). Weekly Goal, Streak Trail, My Focus Rhythm and Feelings Calendar. Point out that the scores are self-reported check-ins, not a diagnosis.
+8. **Never forget** (30s): *Pack-up lists*, tick everything: "All packed!". Set the reminder time to now to show the banner on Home.
+9. **Calm break** (30s): breathing bubble with Bloomi (Breathe in, Hold, Breathe out), then *Move*.
+10. **Accessibility** (20s): ⚙ text size, Calm Screen (less motion), keyboard Tab focus ring.
 
-Talking points: nothing is stored about audio here (Member C), the score is a prototype heuristic, not a diagnosis; "focus drops at 12 minutes" is demo data only.
+Talking points: no audio or video here (audio is Member C's); the score is a prototype heuristic, not a diagnosis; "focus drops at 12 minutes" is demo data only; garden rewards are frontend-only and never change a score.
