@@ -1,9 +1,31 @@
-[
-  "You kept going on that step, {child_name}. Nice effort!",
-  "Great focus on {task_title}, {child_name}!",
-  "Step by step, you are doing it, {child_name}!",
-  "Awesome determination! You finished {step_text}!",
-  "High five, {child_name}! Every small step counts!",
-  "Way to stay with it on {task_title}!",
-  "You are building your focus muscle, {child_name}!"
-]
+{
+  "step_completed": [
+    "You kept going on that step, {name}. Nice effort!",
+    "Step by step, you are doing it, {name}.",
+    "You finished \"{step_text}\". That took focus!",
+    "High five, {name}! Every small step counts.",
+    "You stayed with it, {name}. One more step done.",
+    "Nice work sticking with {task_title}, {name}.",
+    "You are building your focus muscle, {name}!"
+  ],
+  "task_completed": [
+    "You finished {task_title}, {name}! You kept going the whole way.",
+    "All the steps of {task_title} are done. Great effort, {name}!",
+    "{task_title} is done! You worked through every step, {name}.",
+    "You did it one step at a time, {name}. {task_title} is finished!"
+  ],
+  "session_ended": [
+    "You worked hard today, {name}. Time for a little rest.",
+    "Great effort on {task_title}, {name}. You showed up and tried.",
+    "You gave {task_title} your time and focus, {name}. Well done."
+  ],
+  "streak": [
+    "{streak} days in a row, {name}! You keep coming back and trying.",
+    "Day {streak} of your streak, {name}. Showing up is the hard part!",
+    "{streak} days of effort in a row. Nice going, {name}."
+  ],
+  "default": [
+    "Nice effort, {name}! Keep it up.",
+    "You are trying your best, {name}. That matters."
+  ]
+}

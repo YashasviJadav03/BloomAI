@@ -1,32 +1,36 @@
-[
-  {
-    "condition": "angry",
-    "message": "It is completely normal to feel upset. Let's take three slow breaths together.",
-    "suggested_activity": "breathing"
-  },
-  {
-    "condition": "worried",
-    "message": "Big feelings can feel heavy, {child_name}. Shake out your hands and take a breath.",
-    "suggested_activity": "movement"
-  },
-  {
-    "condition": "tired",
-    "message": "Your brain worked hard today. Stretch your arms up to the sky and rest a minute.",
-    "suggested_activity": "stretching"
-  },
-  {
-    "condition": "sad",
-    "message": "It's okay to feel sad right now, {child_name}. You are safe and doing your best.",
-    "suggested_activity": "breathing"
-  },
-  {
-    "condition": "calm",
-    "message": "You're in a great calm space. Keep this gentle rhythm going!",
-    "suggested_activity": "none"
-  },
-  {
-    "condition": "happy",
-    "message": "Love seeing that smile, {child_name}! Let's ride this positive wave!",
-    "suggested_activity": "none"
-  }
-]
+{
+  "angry": [
+    {"message": "That sounds frustrating, {name}. Let's take three slow breaths together.", "suggested_activity": "breathing"},
+    {"message": "Big feelings are okay, {name}. Let's squeeze your fists tight, then let go.", "suggested_activity": "movement"},
+    {"message": "It's okay to feel cross. Let's breathe in for 4 and out for 4.", "suggested_activity": "breathing"}
+  ],
+  "worried": [
+    {"message": "Worry can feel heavy, {name}. Let's shake out your hands and take a breath.", "suggested_activity": "movement"},
+    {"message": "You are safe right now, {name}. Let's take a slow balloon breath.", "suggested_activity": "breathing"},
+    {"message": "Let's do one small step together, {name}. First, a slow breath.", "suggested_activity": "breathing"}
+  ],
+  "tired": [
+    {"message": "Your brain worked hard, {name}. Let's stretch your arms up high.", "suggested_activity": "stretching"},
+    {"message": "Feeling tired is okay, {name}. A quick stretch can help your body wake up.", "suggested_activity": "stretching"},
+    {"message": "Let's take a short wiggle break, {name}, then try again.", "suggested_activity": "movement"}
+  ],
+  "sad": [
+    {"message": "It's okay to feel sad, {name}. You are doing your best.", "suggested_activity": "breathing"},
+    {"message": "Thank you for telling me how you feel, {name}. Let's take a gentle breath.", "suggested_activity": "breathing"},
+    {"message": "Sad feelings can come and go, {name}. A grown-up you trust can help too.", "suggested_activity": "talk_to_adult"}
+  ],
+  "calm": [
+    {"message": "You are in a calm space, {name}. Keep this gentle rhythm going.", "suggested_activity": "none"},
+    {"message": "Nice and steady, {name}. You are ready for the next step.", "suggested_activity": "none"}
+  ],
+  "happy": [
+    {"message": "Love seeing you happy, {name}! Let's keep that good energy going.", "suggested_activity": "none"},
+    {"message": "That's a great feeling, {name}. You are ready for the next step.", "suggested_activity": "none"}
+  ],
+  "distress": [
+    {"message": "Thank you for telling me, {name}. Please find a grown-up you trust and tell them how you feel.", "suggested_activity": "talk_to_adult"}
+  ],
+  "default": [
+    {"message": "Let's take a slow breath together, {name}.", "suggested_activity": "breathing"}
+  ]
+}
