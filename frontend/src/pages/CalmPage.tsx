@@ -4,6 +4,7 @@ import { PageShell } from '../components/PageShell'
 import { BigButton, Card, Segmented } from '../components/ui'
 import { Bloomi } from '../components/mascot/Bloomi'
 import type { BloomiArms } from '../components/mascot/BloomiArt'
+import { useBloomiSpeech } from '../hooks/useBloomiSpeech'
 import { useSettings } from '../hooks/settings'
 
 /**
@@ -16,6 +17,13 @@ export default function CalmPage() {
   const loc = useLocation()
   const message = (loc.state as { message?: string } | null)?.message
   const tab = params.get('activity') === 'movement' ? 'movement' : 'breathing'
+  const { speak } = useBloomiSpeech()
+
+  // Speak the AI-generated calm message shown at the top of the page
+  useEffect(() => {
+    if (message) speak(message)
+  }, [message, speak])
+
   return (
     <PageShell title="Calm break" subtitle="A little pause, just for you" back mode="plain">
       {message && <p className="mb-4 rounded-card bg-lav-soft p-4 text-center text-xl font-bold text-lav-ink" role="status">{message}</p>}

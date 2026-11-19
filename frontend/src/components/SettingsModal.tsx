@@ -19,8 +19,9 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
   return (
     <Modal open={open} onClose={onClose} title="Settings">
       <div className="flex flex-col gap-4">
-        <Toggle checked={!s.muted} onChange={(on) => s.setMuted(!on)} label={s.muted ? '🔇 Sounds are off' : '🔊 Sounds are on'} />
+        <Toggle checked={!s.muted} onChange={(on) => s.setMuted(!on)} label={s.muted ? '🔇 Sound effects off' : '🔊 Sound effects on'} />
         <Toggle checked={s.reduceMotion} onChange={s.setReduceMotion} label="Calm screen (less movement)" />
+        <Toggle checked={s.bloomiVoice} onChange={s.setBloomiVoice} label={s.bloomiVoice ? '🗣️ Bloomi voice on' : '🤫 Bloomi voice off'} />
         <div>
           <p className="mb-2 font-bold text-ink-soft">Text size</p>
           <div role="radiogroup" aria-label="Text size" className="grid grid-cols-3 gap-3">

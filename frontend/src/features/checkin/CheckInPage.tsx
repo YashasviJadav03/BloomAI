@@ -2,7 +2,7 @@
 // Contract with the session screen: /checkin?session=<id>.
 //  - POST /api/checkins; if safe_mode === true we go straight to /safe and never call /api/calm-reply.
 //  - otherwise POST /api/calm-reply and show Bloomi's message (raw scores are never shown to the child).
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../../api/client'
 import type { CalmReplyResponse, Emoji } from '../../api/types'
@@ -11,6 +11,7 @@ import { MOOD_LABEL, MOODS, MoodFace } from '../../components/mascot/MoodFace'
 import { PageShell } from '../../components/PageShell'
 import { BigButton, Field, inputClass } from '../../components/ui'
 import { useApp } from '../../hooks/app'
+import { useBloomiSpeech } from '../../hooks/useBloomiSpeech'
 import { useSpeechInput } from '../../hooks/useSpeechInput'
 
 const FALLBACK: CalmReplyResponse = {
@@ -57,6 +58,40 @@ function AiSourceBadge({ source }: { source: string }) {
   )
 }
 
+/** Separate component so useEffect fires exactly once when the reply mounts. */
+function ReplyScreen({ reply, calmActivity }: { reply: CalmReplyResponse; calmActivity: string | null }) {
+  const nav = useNavigate()
+  const { speak } = useBloomiSpeech()
+
+  // Speak the reply as soon as this screen appears
+  useEffect(() => { speak(reply.message) }, [reply.message, speak])
+
+  return (
+    <PageShell title="Thank you" mode="plain">
+      <div className="mx-auto flex max-w-lg flex-col items-center gap-4 pt-4 text-center">
+        <Bloomi pose="happy" arms="hug" size={170} animate="idle" />
+        <div className="flex flex-col items-center gap-2">
+          <p role="status" className="rounded-card bg-lav-soft p-5 text-2xl font-extrabold leading-snug text-lav-ink">
+            {reply.message}
+          </p>
+          <AiSourceBadge source={reply.source} />
+        </div>
+        {calmActivity ? (
+          <>
+            <BigButton size="lg" className="w-full" icon="cloud"
+              onClick={() => nav(`/calm?activity=${calmActivity}`, { state: { message: reply.message } })}>
+              {calmActivity === 'breathing' ? 'Breathe with Bloomi' : 'Stretch with Bloomi'}
+            </BigButton>
+            <BigButton variant="ghost" onClick={() => nav('/', { replace: true })}>Not now, back home</BigButton>
+          </>
+        ) : (
+          <BigButton size="lg" className="w-full" onClick={() => nav('/', { replace: true })}>Back home</BigButton>
+        )}
+      </div>
+    </PageShell>
+  )
+}
+
 export default function CheckInPage() {
   const nav = useNavigate()
   const [params] = useSearchParams()
@@ -96,30 +131,7 @@ export default function CheckInPage() {
   if (reply) {
     const act = reply.suggested_activity
     const calmActivity = act === 'breathing' ? 'breathing' : act === 'movement' || act === 'stretching' ? 'movement' : null
-    return (
-      <PageShell title="Thank you" mode="plain">
-        <div className="mx-auto flex max-w-lg flex-col items-center gap-4 pt-4 text-center">
-          <Bloomi pose="happy" arms="hug" size={170} animate="idle" />
-          <div className="flex flex-col items-center gap-2">
-            <p role="status" className="rounded-card bg-lav-soft p-5 text-2xl font-extrabold leading-snug text-lav-ink">
-              {reply.message}
-            </p>
-            <AiSourceBadge source={reply.source} />
-          </div>
-          {calmActivity ? (
-            <>
-              <BigButton size="lg" className="w-full" icon="cloud"
-                onClick={() => nav(`/calm?activity=${calmActivity}`, { state: { message: reply.message } })}>
-                {calmActivity === 'breathing' ? 'Breathe with Bloomi' : 'Stretch with Bloomi'}
-              </BigButton>
-              <BigButton variant="ghost" onClick={() => nav('/', { replace: true })}>Not now, back home</BigButton>
-            </>
-          ) : (
-            <BigButton size="lg" className="w-full" onClick={() => nav('/', { replace: true })}>Back home</BigButton>
-          )}
-        </div>
-      </PageShell>
-    )
+    return <ReplyScreen reply={reply} calmActivity={calmActivity} />
   }
 
   // ── Input screen ──────────────────────────────────────────────────────────

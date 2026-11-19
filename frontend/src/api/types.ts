@@ -75,8 +75,18 @@ export interface PraiseRequest {
   task_title: string
   step_text?: string
   streak: number
+  schedule_name?: string
+  step_number?: number
+  total_steps?: number
 }
 export interface PraiseResponse { message: string; source: string }
+
+export interface ChatRequest {
+  child_name: string
+  praise_message: string
+  child_text: string
+}
+export interface ChatResponse { message: string; source: string }
 
 export interface CheckInRequest {
   session_id?: number | null

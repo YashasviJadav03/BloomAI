@@ -167,6 +167,9 @@ def generate_praise(
     step_text: str = "this step",
     streak: int = 1,
     event: str = "step_completed",
+    schedule_name: str = "",
+    step_number: int = 0,
+    total_steps: int = 0,
     rng=None,
 ) -> Dict[str, str]:
     """Generate effort-based praise for a child action.
@@ -182,7 +185,10 @@ def generate_praise(
         child_name = sanitize_child_text(child_name or "Friend", max_len=50) or "Friend"
         task_title = sanitize_child_text(task_title or "your task", max_len=100) or "your task"
         step_text = sanitize_child_text(step_text or "this step", max_len=100) or "this step"
+        schedule_name = sanitize_child_text(schedule_name or "", max_len=100)
         streak = max(1, int(streak or 1))
+        step_number = int(step_number or 0)
+        total_steps = int(total_steps or 0)
 
         templates = _load_praise_templates()
 
@@ -192,7 +198,12 @@ def generate_praise(
                 from ai.llm_client import complete
                 from ai.prompts import SYSTEM_PRAISE, build_praise_user
 
-                user_prompt = build_praise_user(event, task_title, step_text, streak)
+                user_prompt = build_praise_user(
+                    event, task_title, step_text, streak,
+                    schedule_name=schedule_name,
+                    step_number=step_number,
+                    total_steps=total_steps,
+                )
                 raw = complete(SYSTEM_PRAISE, user_prompt)
                 if raw:
                     validated = validate_message(raw, AI_MAX_CHARS)
@@ -337,3 +348,70 @@ def _parse_calm_llm_response(raw: str, validate_message, max_chars: int) -> Opti
         "suggested_activity": activity,
         "source": "llm",
     }
+
+
+# ---------------------------------------------------------------------------
+# Chat reply (child replies to Bloomi's praise)
+# ---------------------------------------------------------------------------
+
+_CHAT_FALLBACKS = [
+    "That is great to hear! Keep going!",
+    "I love that! You are doing wonderfully.",
+    "Thank you for telling me! You are doing your best.",
+    "That made me smile. On to the next step!",
+]
+
+def generate_chat_reply(
+    child_name: str = "Friend",
+    praise_message: str = "",
+    child_text: str = "",
+) -> Dict[str, str]:
+    """Generate a short conversational reply to a child's response to praise.
+
+    Returns {"message": str, "source": "llm" | "template"}.
+    Never raises.
+    """
+    try:
+        from ai.safety_filter import sanitize_child_text, validate_message
+        from ai.config import llm_available, AI_MAX_CHARS
+        import random as _random
+
+        child_name = sanitize_child_text(child_name or "Friend", max_len=50) or "Friend"
+        sanitized_text = sanitize_child_text(child_text or "", max_len=200)
+
+        if not sanitized_text.strip():
+            return {"message": "I am listening! Tell me more.", "source": "template"}
+
+        # Distress check — same defense-in-depth as calm reply
+        if _LOCAL_DISTRESS_RE.search(sanitized_text):
+            return dict(_DISTRESS_RESPONSE)
+
+        try:
+            from backend.app.safety.distress_detector import evaluate_distress
+            if evaluate_distress(sanitized_text, 50):
+                return dict(_DISTRESS_RESPONSE)
+        except Exception:
+            pass
+
+        # Try the LLM
+        if llm_available():
+            try:
+                from ai.llm_client import complete
+                from ai.prompts import SYSTEM_CHAT, build_chat_user
+
+                user_prompt = build_chat_user(praise_message, sanitized_text)
+                raw = complete(SYSTEM_CHAT, user_prompt)
+                if raw:
+                    validated = validate_message(raw, AI_MAX_CHARS)
+                    if validated:
+                        return {"message": validated, "source": "llm"}
+                    logger.info("Chat LLM output rejected by safety filter; using template.")
+            except Exception as exc:
+                logger.warning("Chat LLM path failed: %s", type(exc).__name__)
+
+        # Template fallback
+        return {"message": _random.choice(_CHAT_FALLBACKS), "source": "template"}
+
+    except Exception as exc:
+        logger.error("generate_chat_reply unexpected error: %s", type(exc).__name__)
+        return {"message": "Thank you for telling me! Keep going!", "source": "template"}

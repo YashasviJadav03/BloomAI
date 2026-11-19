@@ -3,6 +3,9 @@
 Each test covers a complete user journey — no mocks, no monkeypatching.
 The in-memory SQLite database is seeded fresh for every test (see conftest.py).
 
+The LLM is always disabled here (patched to template-only mode) so tests are
+fast and require no network access or API key.
+
 Flows covered
 ─────────────
 1. First launch: profile does not exist → create → read back
@@ -18,7 +21,15 @@ Flows covered
 11. Dev endpoints: seed-demo and reset work correctly
 """
 import pytest
+from unittest.mock import patch
 from fastapi.testclient import TestClient
+
+
+@pytest.fixture(autouse=True)
+def disable_llm():
+    """Force template-only mode for every integration test — no real API calls."""
+    with patch("ai.config.GEMINI_API_KEY", ""):
+        yield
 
 
 # ─────────────────────────────────────────────────────────────────────────────

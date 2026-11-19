@@ -2,7 +2,8 @@
 // VITE_API_MODE=mock -> in-browser fake (api/mock.ts)   VITE_API_MODE=real -> fetch(`${VITE_API_BASE}/...`)
 import { mockRequest } from './mock'
 import type {
-  CalmReplyRequest, CalmReplyResponse, CaregiverAlert, CaregiverInsights, CheckInRequest, CheckInResponse,
+  CalmReplyRequest, CalmReplyResponse, CaregiverAlert, CaregiverInsights, ChatRequest, ChatResponse,
+  CheckInRequest, CheckInResponse,
   Checklist, ChecklistInput, ChecklistItem, MoodDay, PraiseRequest, PraiseResponse, Profile, ProfileInput,
   ProgressSummary, SafetyResources, Schedule, ScheduleInput, SessionEnd, SessionStart, Step, StepComplete,
   StepInput, SupportRecommendations, Task, TaskInput, Template,
@@ -78,6 +79,7 @@ export const api = {
 
   // AI + safety + progress (owned by C / A, read by B)
   praise: (r: PraiseRequest) => post<PraiseResponse>('/praise', r),
+  chat: (r: ChatRequest) => post<ChatResponse>('/chat', r),
   submitCheckin: (c: CheckInRequest) => post<CheckInResponse>('/checkins', c),
   calmReply: (r: CalmReplyRequest) => post<CalmReplyResponse>('/calm-reply', r),
   safetyResources: () => get<SafetyResources>('/safety/resources'),

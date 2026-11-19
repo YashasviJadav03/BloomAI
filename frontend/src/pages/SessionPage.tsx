@@ -81,7 +81,12 @@ function Session({ sid, tid }: { sid: number; tid: number }) {
     setPoints(end.total_points); setResult(end); markDoneToday(t.id); sound.fanfare()
     const unlocked = newlyUnlockedByPoints(startPoints.current, end.total_points)?.name ?? null
     setReward({ points: base.points, bonus: end.bonus_points, message: null, big: true, unlocked, then: () => setPhase('finished') })
-    void fetchPraise({ ...base.praiseReq, event: 'task_completed' }).then((r) => setReward((rw) => (rw ? { ...rw, message: r.message, messageSource: r.source } : rw)))
+    void fetchPraise({
+      ...base.praiseReq,
+      event: 'task_completed',
+      schedule_name: sched?.name,
+      total_steps: t.steps.length,
+    }).then((r) => setReward((rw) => (rw ? { ...rw, message: r.message, messageSource: r.source } : rw)))
   }
 
   async function done() {
@@ -90,12 +95,21 @@ function Session({ sid, tid }: { sid: number; tid: number }) {
     try {
       const step = task.steps[idx]
       if (!step) {                                  // task has no steps: one big "I'm done"
-        await finishTask({ points: 0, praiseReq: { event: 'task_completed', child_name: name, task_title: task.title, streak: 0 } }, task, session)
+        await finishTask({ points: 0, praiseReq: { event: 'task_completed', child_name: name, task_title: task.title, streak: 0, schedule_name: sched?.name } }, task, session)
         return
       }
       const r = await api.completeStep(session.session_id, step.id)
       setPoints(r.total_points)
-      const praiseReq = { event: 'step_completed' as const, child_name: name, task_title: task.title, step_text: step.text, streak: r.streak }
+      const praiseReq = {
+        event: 'step_completed' as const,
+        child_name: name,
+        task_title: task.title,
+        step_text: step.text,
+        streak: r.streak,
+        schedule_name: sched?.name,
+        step_number: idx + 1,
+        total_steps: task.steps.length,
+      }
       if (r.steps_remaining > 0) {
         sound.ding()
         setReward({ points: r.points_awarded, message: null, then: () => setIdx((i) => i + 1) })
@@ -187,7 +201,7 @@ function Session({ sid, tid }: { sid: number; tid: number }) {
 
       {phase === 'transition' && next && <Transition next={next} color={sched.color} onGo={() => nav(`/schedule/${sid}/task/${next.id}`, { replace: true })} />}
 
-      {reward && <RewardOverlay message={reward.message} defaultMessage={DEFAULT_PRAISE} points={reward.points} bonus={reward.bonus} big={reward.big} unlocked={reward.unlocked} rewards={rewards} messageSource={reward.messageSource} onClose={closeReward} />}
+      {reward && <RewardOverlay message={reward.message} defaultMessage={DEFAULT_PRAISE} points={reward.points} bonus={reward.bonus} big={reward.big} unlocked={reward.unlocked} rewards={rewards} messageSource={reward.messageSource} childName={name} onClose={closeReward} />}
     </PageShell>
   )
 }

@@ -1,9 +1,11 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import type { SafetyResources } from '../api/types'
 import { PageShell } from '../components/PageShell'
 import { BigButton, Card, Loading } from '../components/ui'
 import { useAsync } from '../hooks/useAsync'
+import { useBloomiSpeech } from '../hooks/useBloomiSpeech'
 import { Bloomi } from '../components/mascot/Bloomi'
 
 // Shown if the server can't be reached: this screen must NEVER be blocked by an error.
@@ -21,6 +23,12 @@ export default function SafeModePage() {
   const nav = useNavigate()
   const { data, loading } = useAsync(() => api.safetyResources().catch(() => FALLBACK))
   const res = data ?? FALLBACK
+  const { speak } = useBloomiSpeech()
+
+  // Speak the safety message as soon as it's available
+  useEffect(() => {
+    if (!loading && res.message) speak(res.message)
+  }, [loading, res.message, speak])
   return (
     <PageShell title="" mode="plain">
       {loading ? <Loading label="One moment…" /> : (

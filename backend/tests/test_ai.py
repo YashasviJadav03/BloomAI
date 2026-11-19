@@ -10,6 +10,17 @@ import pytest
 from unittest.mock import patch, MagicMock
 
 # ---------------------------------------------------------------------------
+# Global: disable real LLM calls for all tests by default.
+# Individual tests that need to test the LLM path patch GEMINI_API_KEY + complete.
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(autouse=True)
+def _disable_llm_by_default():
+    """Force template-only mode unless a test explicitly patches GEMINI_API_KEY."""
+    with patch("ai.config.GEMINI_API_KEY", ""):
+        yield
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
