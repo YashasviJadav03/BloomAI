@@ -2,9 +2,9 @@
 // VITE_API_MODE=mock -> in-browser fake (api/mock.ts)   VITE_API_MODE=real -> fetch(`${VITE_API_BASE}/...`)
 import { mockRequest } from './mock'
 import type {
-  Checklist, ChecklistInput, ChecklistItem, PraiseRequest, PraiseResponse, Profile, ProfileInput,
-  ProgressSummary, SafetyResources, Schedule, ScheduleInput, SessionEnd, SessionStart, Step, StepComplete,
-  StepInput, Task, TaskInput, Template,
+  CalmReplyRequest, CalmReplyResponse, CheckInRequest, CheckInResponse, Checklist, ChecklistInput, ChecklistItem, MoodDay,
+  PraiseRequest, PraiseResponse, Profile, ProfileInput, ProgressSummary, SafetyResources, Schedule, ScheduleInput,
+  SessionEnd, SessionStart, Step, StepComplete, StepInput, Task, TaskInput, Template,
 } from './types'
 import { ApiError } from './types'
 
@@ -54,7 +54,7 @@ export const api = {
   addTask: (scheduleId: number, t: Partial<TaskInput>) => post<Task>(`/schedules/${scheduleId}/tasks`, t),
   updateTask: (id: number, t: Partial<TaskInput>) => put<Task>(`/tasks/${id}`, t),
   deleteTask: (id: number) => del(`/tasks/${id}`),
-  reorderTasks: (scheduleId: number, taskIds: number[]) => put<Schedule>(`/schedules/${scheduleId}/tasks/reorder`, { task_ids: taskIds }),
+  reorderTasks: (scheduleId: number, taskIds: number[]) => put<Schedule>(`/schedules/${scheduleId}/tasks/reorder`, { ordered_task_ids: taskIds }),
 
   addStep: (taskId: number, s: Partial<StepInput>) => post<Step>(`/tasks/${taskId}/steps`, s),
   updateStep: (id: number, s: Partial<StepInput> & { order?: number }) => put<Step>(`/steps/${id}`, s),
@@ -65,8 +65,8 @@ export const api = {
   createChecklist: (c: ChecklistInput) => post<Checklist>('/checklists', c),
   updateChecklist: (id: number, c: Partial<ChecklistInput>) => put<Checklist>(`/checklists/${id}`, c),
   deleteChecklist: (id: number) => del(`/checklists/${id}`),
-  addChecklistItem: (id: number, i: { text: string; icon?: string }) => post<ChecklistItem>(`/checklists/${id}/items`, i),
-  updateChecklistItem: (id: number, i: Partial<Pick<ChecklistItem, 'text' | 'icon' | 'checked'>>) => put<ChecklistItem>(`/checklist-items/${id}`, i),
+  addChecklistItem: (id: number, i: { text: string; icon?: string; order?: number }) => post<ChecklistItem>(`/checklists/${id}/items`, i),
+  updateChecklistItem: (id: number, i: Partial<Pick<ChecklistItem, 'text' | 'icon' | 'is_checked'>>) => put<ChecklistItem>(`/checklist-items/${id}`, i),
   deleteChecklistItem: (id: number) => del(`/checklist-items/${id}`),
   resetChecklist: (id: number) => post<Checklist>(`/checklists/${id}/reset`),
 
@@ -77,8 +77,11 @@ export const api = {
 
   // AI + safety + progress (owned by C / A, read by B)
   praise: (r: PraiseRequest) => post<PraiseResponse>('/praise', r),
+  submitCheckin: (c: CheckInRequest) => post<CheckInResponse>('/checkins', c),
+  calmReply: (r: CalmReplyRequest) => post<CalmReplyResponse>('/calm-reply', r),
   safetyResources: () => get<SafetyResources>('/safety/resources'),
   progressSummary: () => get<ProgressSummary>('/progress/summary'),
+  progressMood: (days = 7) => get<MoodDay[]>(`/progress/mood?days=${days}`),
 
   // Demo helpers
   seedDemo: () => post<unknown>('/dev/seed-demo'),

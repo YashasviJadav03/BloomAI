@@ -7,17 +7,34 @@ export const ICONS: Record<string, string> = {
   calendar: '📅', school: '🏫', calculator: '🧮', read: '📖', clock: '⏰', star: '⭐', heart: '💛', check: '✅',
   broom: '🧹', toy: '🧸', bottle: '🥤', homework: '📝', pajamas: '🩳', story: '📕', light: '💡',
   hairbrush: '💇', face: '🙂', paint: '🎨', music: '🎵', ball: '⚽', leaf: '🌱', cloud: '☁️',
+  // names used by the backend presets (backend/seed/presets.py)
+  droplet: '💧', towel: '🧻', apple: '🍎', food: '🍽️', glass: '🥛', sparkles: '✨', cross: '✖️', 'book-open': '📖',
+  backpack: '🎒', box: '📦', card: '🪪', eye: '👀', home: '🏠', trophy: '🏆', flower: '🌸', rocket: '🚀',
 }
 export const ICON_NAMES = Object.keys(ICONS)
 
 export const AVATARS: Record<string, string> = {
-  fox: '🦊', panda: '🐼', owl: '🦉', cat: '🐱', dog: '🐶', frog: '🐸', lion: '🦁', penguin: '🐧', bunny: '🐰', bear: '🐻',
+  star: '⭐', fox: '🦊', panda: '🐼', owl: '🦉', cat: '🐱', dog: '🐶', frog: '🐸', lion: '🦁', penguin: '🐧', bunny: '🐰', bear: '🐻',
 }
 export const REWARDS: Record<string, string> = {
   star: '⭐', rocket: '🚀', unicorn: '🦄', dino: '🦖', balloon: '🎈', trophy: '🏆', rainbow: '🌈', cookie: '🍪',
 }
 
-export const SCHEDULE_COLORS = ['#F4A261', '#6AA9D8', '#9B8AD1', '#D97B93', '#3E8E7E', '#E9C46A']
+export const SCHEDULE_COLORS = ['#F4A261', '#2A9D8F', '#4A6FA5', '#9B8AD1', '#D97B93', '#6AA9D8', '#E76F51']
+
+/** Favourite rewards may be our keys ("rocket") or free text from the backend seed ("Lego build break"). */
+export function rewardChar(r: string): string {
+  if (REWARDS[r]) return REWARDS[r]
+  const t = r.toLowerCase()
+  if (/lego|build/.test(t)) return '🧱'
+  if (/play|park|outdoor/.test(t)) return '🛝'
+  if (/music|song/.test(t)) return '🎵'
+  if (/game|screen/.test(t)) return '🎮'
+  if (/treat|snack|ice|cookie/.test(t)) return '🍪'
+  if (/story|book/.test(t)) return '📚'
+  return '⭐'
+}
+export const rewardChars = (list: string[]) => (list.length ? list.map(rewardChar) : ['⭐', '🌈', '🌸'])
 
 export function iconChar(name: string | undefined | null): string {
   if (!name) return '⭐'
@@ -29,6 +46,16 @@ export function Icon({ name, className = '', label }: { name: string | undefined
   return (
     <span className={`inline-block leading-none select-none ${className}`} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
       {iconChar(name)}
+    </span>
+  )
+}
+
+/** Rounded tinted tile behind an icon: gives every picture the same calm, finished look. */
+export function IconTile({ name, color = '#9B8AD1', size = 'md', label }: { name: string | undefined | null; color?: string; size?: 'sm' | 'md' | 'lg' | 'xl'; label?: string }) {
+  const dims = { sm: 'h-10 w-10 rounded-xl text-xl', md: 'h-14 w-14 rounded-2xl text-3xl', lg: 'h-20 w-20 rounded-3xl text-5xl', xl: 'h-32 w-32 rounded-[2rem] text-7xl' }[size]
+  return (
+    <span className={`inline-flex shrink-0 items-center justify-center ${dims}`} style={{ background: tint(color, 0.84), boxShadow: `inset 0 -3px 0 ${tint(color, 0.68)}` }}>
+      <Icon name={name} label={label} />
     </span>
   )
 }

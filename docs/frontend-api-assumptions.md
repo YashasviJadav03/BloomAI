@@ -1,24 +1,27 @@
-# Contract gaps to agree with Member A / C (frontend assumptions)
+# Frontend and API: what the frontend relies on
 
-The contract's "Key payloads" cover schedules, sessions, check-ins, praise, calm-reply, progress and safety. These were not specified, so `api/types.ts` assumes them. Please confirm or change (one PR to `api-contract.md`; I then adjust `types.ts` and `mock.ts`).
+The frontend was first built against `api-contract.md` and then checked against the real FastAPI backend. These are the points where the real backend is the source of truth. The frontend (`api/types.ts`, `api/client.ts`, `api/mock.ts`) matches them, and the mock mirrors the same routes and JSON shapes.
 
-| # | Assumption | Where used |
+| # | Real backend behaviour | Frontend handling |
 |---|---|---|
-| 1 | `Profile` = `{id, name, avatar, favourite_rewards: string[]}`; avatar and reward are string keys (`panda`, `rocket`...) | setup, rewards |
-| 2 | `GET /api/schedules` returns full nested schedules (tasks + steps), same as `/schedules/{id}` | home |
-| 3 | `GET /api/templates` item = `{id, type, name, color?, icon, description?}` | template picker |
-| 4 | `PUT /api/schedules/{id}/tasks/reorder` body = `{"task_ids":[...]}`, returns the schedule | edit mode |
-| 5 | Step reorder: `PUT /api/steps/{id}` accepts `order` (1-based). No dedicated endpoint | task editor |
-| 6 | `Checklist` = `{id, name, icon, reminder_time: "HH:MM"\|null, items:[{id,text,icon,checked}]}` | checklists |
-| 7 | `POST /api/checklists` with `template_id` creates from a checklist template | picker |
-| 8 | DELETE and reset endpoints return any 2xx JSON (body ignored) | all |
-| 9 | Task `icon` and step `icon` are icon-name strings from `src/theme/icons.tsx` (`tooth`, `sun`, ...); unknown names show ⭐ | all |
-| 10 | B also calls `GET /api/progress/summary` (for the header points total). Contract lists it as "used by C" | header |
-| 11 | `POST /api/praise` is called with `event: "step_completed"` or `"task_completed"` | rewards |
-| 12 | Helpline `contact` that looks like a phone number becomes a `tel:` link. "set in config" placeholder must be replaced before the demo | safe screen |
+| 1 | `GET /api/schedules` returns nested schedules (tasks + steps) | Home and schedule pages use it directly |
+| 2 | Templates are `{id, type, name, color, icon, data}`; counts come from `data.tasks` / `data.items` | `TemplatePicker` derives counts and duration |
+| 3 | Task reorder body is `{ "ordered_task_ids": [...] }` | `api.reorderTasks` |
+| 4 | Steps are not renumbered by the backend. `PUT /api/steps/{id}` with `order` only changes that step | A move swaps the two steps' `order` values |
+| 5 | Checklist items use `is_checked`; checklists have no icon; `reminder_time` is `"HH:MM"` | Checklist pages |
+| 6 | `POST /api/checkins` returns `{id, focus_score, emotion_score, label, safe_mode}` | Check-in page |
+| 7 | `POST /api/calm-reply` returns `{message, suggested_activity, source}` (`breathing`, `movement`, `stretching`, `none`) | Check-in page; `stretching` opens the movement tab |
+| 8 | `GET /api/progress/summary` returns points, current and best streak, tasks today and this week | Header, Home, My Garden |
+| 9 | `GET /api/progress/mood?days=N` returns only days that have check-ins | Rhythm chart and Feelings Calendar draw gaps for other days |
 
-Integration points with Member C (routes in `App.tsx`; C replaces the stub files in `src/features/`)
-- B navigates to `/checkin?session=<session_id>` after a task ("How did that feel?").
-- C: if `/api/checkins` returns `safe_mode: true`, `navigate('/safe', {replace:true})`. Never call calm-reply in that case.
-- C: otherwise show the calm reply; to open the calm screen use `navigate('/calm?activity=breathing|movement', {state:{message}})`.
-- `RewardOverlay` takes plain props (`message`, `points`, `rewards`...), so any praise text can be passed.
+## Not provided by the API (handled on the device only)
+- **Done today per task:** remembered in `localStorage` (`lib/doneToday.ts`).
+- **Garden rewards:** thresholds in `lib/garden.ts`, computed from real `total_points` and `best_streak`. Visual rewards only; nothing is saved to the backend.
+- **Weekly goal:** chosen by the child, saved on the device.
+
+## Safety flow
+- `/safe` always renders, even if the server is down.
+- If `/api/checkins` returns `safe_mode: true`, the frontend goes to `/safe` immediately and never calls `/api/calm-reply`.
+
+## Not in the frontend
+- Audio check-ins (Member C's task in the plan) and video are not implemented. The check-in is emoji + text.
