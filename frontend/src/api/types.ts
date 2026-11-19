@@ -131,3 +131,44 @@ export class ApiError extends Error {
     this.status = status
   }
 }
+
+// ── Caregiver & Clinical Insights ────────────────────────────────────────────
+
+export interface FocusPattern {
+  avg_focus_score: number
+  optimal_task_duration_minutes: number
+  restlessness_onset_minutes: number
+  summary: string
+}
+export interface ForgetfulnessPattern {
+  checklist_completion_rate: number
+  most_forgotten_items: string[]
+  summary: string
+}
+export interface EmotionalRegulationPattern {
+  dominant_mood: string
+  calm_recovery_rate: number
+  summary: string
+}
+export interface CaregiverInsights {
+  child_name: string
+  time_range_days: number
+  focus_pattern: FocusPattern
+  forgetfulness_pattern: ForgetfulnessPattern
+  emotional_regulation: EmotionalRegulationPattern
+  clinical_summary: string
+  active_alerts_count: number
+}
+export interface CaregiverAlert {
+  id: number
+  checkin_id: number | null
+  trigger_text: string | null
+  emotion_score: number
+  is_acknowledged: boolean
+  created_at: string
+}
+export interface SupportRecommendations {
+  recommended_max_task_seconds: number
+  suggested_micro_break_seconds: number
+  recommendations: string[]
+}

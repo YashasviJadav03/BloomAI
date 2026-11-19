@@ -6,3 +6,7 @@ export function getDoneToday(): number[] {
 export function markDoneToday(taskId: number) {
   try { const s = new Set(getDoneToday()); s.add(taskId); localStorage.setItem(key(), JSON.stringify([...s])) } catch { /* ignore */ }
 }
+/** Clear today's completed-task list (e.g. after a reset or for a fresh start). */
+export function clearDoneToday() {
+  try { localStorage.removeItem(key()) } catch { /* ignore */ }
+}

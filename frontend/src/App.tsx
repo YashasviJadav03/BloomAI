@@ -4,6 +4,7 @@ import ProgressPage from './features/progress/ProgressPage'
 import { ErrorState, Loading } from './components/ui'
 import { useApp } from './hooks/app'
 import CalmPage from './pages/CalmPage'
+import CaregiverPage from './pages/CaregiverPage'
 import ChecklistPage from './pages/ChecklistPage'
 import ChecklistsPage from './pages/ChecklistsPage'
 import HomePage from './pages/HomePage'
@@ -20,6 +21,8 @@ export default function App() {
 
   // The safe-mode screen must always open, even if the profile or server is unavailable.
   if (pathname === '/safe') return <SafeModePage />
+  // Caregiver page has its own full-screen PIN gate — render it outside normal app guards
+  if (pathname === '/caregiver') return <CaregiverPage />
   if (status === 'loading') return <div className="mx-auto max-w-md pt-24"><Loading /></div>
   if (status === 'error') return <div className="mx-auto max-w-md pt-16"><ErrorState message={error} onRetry={reload} /></div>
   if (status === 'needs-setup' && pathname !== '/setup') return <Navigate to="/setup" replace />

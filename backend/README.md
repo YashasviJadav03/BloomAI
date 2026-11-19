@@ -70,3 +70,78 @@ curl -X POST http://localhost:8000/api/dev/reset
 docker build -t bloomai-backend -f backend/Dockerfile .
 docker run -p 8000:8000 bloomai-backend
 ```
+
+---
+
+## AI Module
+
+### How it works
+
+The AI module lives in `/ai` (repo root) and is imported by the backend. It powers two endpoints:
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /api/praise` | Effort-based praise when a child completes a step, task, or streak |
+| `POST /api/calm-reply` | Empathetic calm-down response with a suggested activity |
+
+Both endpoints always return a valid response. If the LLM is unavailable or produces unsafe output, the response silently falls back to a curated child-safe template.
+
+### Enabling the LLM
+
+Copy `backend/.env.example` to `backend/.env` and set `GEMINI_API_KEY`:
+
+```bash
+GEMINI_API_KEY=AIzaSy...
+AI_MODEL=gemini-2.0-flash          # optional, this is the default
+AI_TIMEOUT_SECONDS=4               # optional
+AI_MAX_CHARS=240                   # optional
+AI_ENABLED=true                    # set to "false" to force templates only
+```
+
+**No key = templates only.** The app behaves identically to its previous state when no key is set. No environment variable is required for normal operation.
+
+### Safety filter
+
+Every LLM response passes through `ai/safety_filter.py` before being returned. A message is **rejected** (and replaced by a template) if it:
+
+- Exceeds `AI_MAX_CHARS` characters or contains a newline
+- Has more than 2 sentences
+- Contains a URL, markdown characters, or `@`
+- Matches any blocked word (stupid, loser, worthless, etc.)
+- Contains medical or diagnostic language (ADHD, medication, diagnosis, disorder, etc.)
+- Requests personal information (address, phone, school)
+- Contains self-harm or violence terms
+
+The child's free text is also sanitized before it enters any prompt: `<` and `>` are stripped, control characters are removed, and whitespace is collapsed.
+
+### Distress short-circuit
+
+If the child's text matches any distress keyword (`hate myself`, `hurt myself`, `kill myself`, `want to disappear`, etc.) **the LLM is never called**. The endpoint returns immediately:
+
+```json
+{
+  "message": "Thank you for telling me. Let's find a trusted grown-up to talk to.",
+  "suggested_activity": "none",
+  "source": "template"
+}
+```
+
+This check runs before any LLM call and cannot be bypassed.
+
+### Prompt injection defence
+
+Child-supplied text is wrapped in `<child_text>` tags in the prompt, and the system prompt instructs the model to treat that content as data only. The sanitizer also strips angle brackets so tag injection from child input is impossible.
+
+### Limitations and review
+
+> **This is a prototype, not a clinical tool.**
+> AI outputs are heuristic. They are not a substitute for a therapist, doctor, or caregiver.
+> Outputs should be periodically sampled and reviewed by a human for tone and safety.
+
+To generate a batch of sample messages for review:
+
+```bash
+python ai/review_samples.py
+```
+
+This prints ~30 praise and calm messages with `[PASS]` / `[REJECT]` verdicts from the safety filter, so the team can audit tone and safety without a live session.

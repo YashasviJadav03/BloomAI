@@ -1,9 +1,24 @@
-[
-  "You kept going on that step, {child_name}. Nice effort!",
-  "Great focus on {task_title}, {child_name}!",
-  "Step by step, you are doing it, {child_name}!",
-  "Awesome determination! You finished {step_text}!",
-  "High five, {child_name}! Every small step counts!",
-  "Way to stay with it on {task_title}!",
-  "You are building your focus muscle, {child_name}!"
-]
+{
+  "step_completed": [
+    "You kept going on that step, {child_name}. Nice effort!",
+    "Great focus on {task_title}, {child_name}!",
+    "Step by step, you are doing it, {child_name}!",
+    "Awesome determination finishing {step_text}, {child_name}!",
+    "High five, {child_name}! Every small step counts!",
+    "Way to stay with it on {task_title}!",
+    "You are building your focus muscle, {child_name}!"
+  ],
+  "task_completed": [
+    "You finished the whole task, {child_name}! That took real effort.",
+    "All done with {task_title}! Great work staying with it, {child_name}!",
+    "You did it, {child_name}! Completing {task_title} is a big deal.",
+    "Task complete! Your persistence on {task_title} really shows, {child_name}!",
+    "Every step of {task_title} done! You kept going and finished, {child_name}!"
+  ],
+  "streak": [
+    "A streak of {streak} in a row, {child_name}! That is real dedication.",
+    "You have been showing up {streak} times. That focus adds up, {child_name}!",
+    "Keeping that rhythm going for {streak} in a row is something to be proud of, {child_name}!",
+    "You keep coming back and trying — {streak} in a row, {child_name}. Amazing effort!"
+  ]
+}

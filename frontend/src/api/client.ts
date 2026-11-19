@@ -2,9 +2,10 @@
 // VITE_API_MODE=mock -> in-browser fake (api/mock.ts)   VITE_API_MODE=real -> fetch(`${VITE_API_BASE}/...`)
 import { mockRequest } from './mock'
 import type {
-  CalmReplyRequest, CalmReplyResponse, CheckInRequest, CheckInResponse, Checklist, ChecklistInput, ChecklistItem, MoodDay,
-  PraiseRequest, PraiseResponse, Profile, ProfileInput, ProgressSummary, SafetyResources, Schedule, ScheduleInput,
-  SessionEnd, SessionStart, Step, StepComplete, StepInput, Task, TaskInput, Template,
+  CalmReplyRequest, CalmReplyResponse, CaregiverAlert, CaregiverInsights, CheckInRequest, CheckInResponse,
+  Checklist, ChecklistInput, ChecklistItem, MoodDay, PraiseRequest, PraiseResponse, Profile, ProfileInput,
+  ProgressSummary, SafetyResources, Schedule, ScheduleInput, SessionEnd, SessionStart, Step, StepComplete,
+  StepInput, SupportRecommendations, Task, TaskInput, Template,
 } from './types'
 import { ApiError } from './types'
 
@@ -86,4 +87,10 @@ export const api = {
   // Demo helpers
   seedDemo: () => post<unknown>('/dev/seed-demo'),
   reset: () => post<unknown>('/dev/reset'),
+
+  // Caregiver & clinical insights
+  caregiverInsights: (days = 7) => get<CaregiverInsights>(`/caregiver/insights?days=${days}`),
+  caregiverAlerts: () => get<CaregiverAlert[]>('/caregiver/alerts'),
+  acknowledgeAlert: (id: number) => post<CaregiverAlert>(`/caregiver/alerts/${id}/acknowledge`),
+  supportRecommendations: () => get<SupportRecommendations>('/support/recommendations'),
 }

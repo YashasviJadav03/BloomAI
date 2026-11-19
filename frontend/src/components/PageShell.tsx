@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useApp } from '../hooks/app'
+import { AVATARS } from '../theme/icons'
 import { BottomNav } from './BottomNav'
 import { SettingsModal } from './SettingsModal'
 import { IconButton } from './ui'
@@ -19,6 +20,21 @@ function BrandMark() {
       </svg>
       <span className="text-xl font-extrabold text-lav-ink">BloomAI</span>
     </span>
+  )
+}
+
+/** Avatar chip: shows the child's buddy emoji + name, links to profile edit. */
+function ProfileChip({ name, avatar }: { name: string; avatar: string }) {
+  const emoji = AVATARS[avatar] ?? avatar
+  return (
+    <Link
+      to="/setup?edit=1"
+      aria-label={`My profile: ${name}`}
+      className="inline-flex h-11 items-center gap-2 rounded-full border-2 border-line bg-card px-3 text-base font-extrabold text-ink shadow-soft transition-colors hover:bg-lav-soft"
+    >
+      <span className="text-2xl leading-none" aria-hidden>{emoji}</span>
+      <span className="max-w-[7rem] truncate">{name}</span>
+    </Link>
   )
 }
 
@@ -59,6 +75,10 @@ export function PageShell({ title, subtitle, back, backTo, right, children, tint
             <IconButton label={mode === 'focus' ? 'Leave this task' : 'Go back'} onClick={() => (backTo ? nav(backTo) : nav(-1))}>{mode === 'focus' ? '✕' : '←'}</IconButton>
           ) : mode === 'default' ? <BrandMark /> : null}
           <div className="flex-1" />
+          {/* Profile chip: avatar + name, visible on every default-mode page, links to profile edit */}
+          {showExtras && profile && (
+            <ProfileChip name={profile.name} avatar={profile.avatar} />
+          )}
           {mode === 'focus' && (
             <Link to="/calm" aria-label="I need a calm break" className="inline-flex h-12 items-center gap-2 rounded-full border-2 border-line bg-card px-4 text-base font-extrabold text-lav-ink shadow-soft hover:bg-lav-soft">
               <span aria-hidden>🫧</span> Calm break
@@ -69,7 +89,7 @@ export function PageShell({ title, subtitle, back, backTo, right, children, tint
               <span className="inline-flex h-12 items-center gap-1.5 rounded-full bg-sun-light px-4 text-lg font-extrabold" aria-label={`${points} points`}>
                 <span aria-hidden>⭐</span><span className="tabular-nums">{points}</span>
               </span>
-              <IconButton label={`Settings${profile ? ` for ${profile.name}` : ''}`} onClick={() => setSettings(true)}>⚙️</IconButton>
+              <IconButton label="Settings" onClick={() => setSettings(true)}>⚙️</IconButton>
             </>
           )}
         </div>

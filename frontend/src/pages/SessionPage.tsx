@@ -15,13 +15,17 @@ import { Bloomi } from '../components/mascot/Bloomi'
 import { newlyUnlockedByPoints } from '../lib/garden'
 
 type Phase = 'ready' | 'steps' | 'finished' | 'transition'
-interface Reward { points: number; bonus?: number; message: string | null; big?: boolean; unlocked?: string | null; then: () => void }
+interface Reward { points: number; bonus?: number; message: string | null; messageSource?: string; big?: boolean; unlocked?: string | null; then: () => void }
 
 const DEFAULT_PRAISE = 'Great job!'
 /** Praise must never block or break the flow: 4s limit, any failure -> built-in default. */
-function fetchPraise(req: Parameters<typeof api.praise>[0]): Promise<string> {
-  const timeout = new Promise<string>((res) => setTimeout(() => res(DEFAULT_PRAISE), 4000))
-  const call = api.praise(req).then((r) => r.message || DEFAULT_PRAISE).catch(() => DEFAULT_PRAISE)
+function fetchPraise(req: Parameters<typeof api.praise>[0]): Promise<{ message: string; source: string }> {
+  const timeout = new Promise<{ message: string; source: string }>((res) =>
+    setTimeout(() => res({ message: DEFAULT_PRAISE, source: 'template' }), 4000)
+  )
+  const call = api.praise(req)
+    .then((r) => ({ message: r.message || DEFAULT_PRAISE, source: r.source ?? 'template' }))
+    .catch(() => ({ message: DEFAULT_PRAISE, source: 'template' }))
   return Promise.race([call, timeout])
 }
 
@@ -77,7 +81,7 @@ function Session({ sid, tid }: { sid: number; tid: number }) {
     setPoints(end.total_points); setResult(end); markDoneToday(t.id); sound.fanfare()
     const unlocked = newlyUnlockedByPoints(startPoints.current, end.total_points)?.name ?? null
     setReward({ points: base.points, bonus: end.bonus_points, message: null, big: true, unlocked, then: () => setPhase('finished') })
-    void fetchPraise({ ...base.praiseReq, event: 'task_completed' }).then((m) => setReward((r) => (r ? { ...r, message: m } : r)))
+    void fetchPraise({ ...base.praiseReq, event: 'task_completed' }).then((r) => setReward((rw) => (rw ? { ...rw, message: r.message, messageSource: r.source } : rw)))
   }
 
   async function done() {
@@ -95,7 +99,7 @@ function Session({ sid, tid }: { sid: number; tid: number }) {
       if (r.steps_remaining > 0) {
         sound.ding()
         setReward({ points: r.points_awarded, message: null, then: () => setIdx((i) => i + 1) })
-        void fetchPraise(praiseReq).then((m) => setReward((cur) => (cur ? { ...cur, message: m } : cur)))
+        void fetchPraise(praiseReq).then((r) => setReward((cur) => (cur ? { ...cur, message: r.message, messageSource: r.source } : cur)))
       } else {
         await finishTask({ points: r.points_awarded, praiseReq }, task, session)
       }
@@ -183,7 +187,7 @@ function Session({ sid, tid }: { sid: number; tid: number }) {
 
       {phase === 'transition' && next && <Transition next={next} color={sched.color} onGo={() => nav(`/schedule/${sid}/task/${next.id}`, { replace: true })} />}
 
-      {reward && <RewardOverlay message={reward.message} defaultMessage={DEFAULT_PRAISE} points={reward.points} bonus={reward.bonus} big={reward.big} unlocked={reward.unlocked} rewards={rewards} onClose={closeReward} />}
+      {reward && <RewardOverlay message={reward.message} defaultMessage={DEFAULT_PRAISE} points={reward.points} bonus={reward.bonus} big={reward.big} unlocked={reward.unlocked} rewards={rewards} messageSource={reward.messageSource} onClose={closeReward} />}
     </PageShell>
   )
 }

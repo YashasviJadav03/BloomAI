@@ -19,7 +19,14 @@ export default function SetupPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (editing && profile) { setName(profile.name); setAvatar(profile.avatar); setRewards(profile.favourite_rewards) }
+    if (editing && profile) {
+      setName(profile.name)
+      setAvatar(profile.avatar)
+      // Keep only reward keys that exist in the picker grid.
+      // The backend seed stores free-text strings ("Extra playground time") which cannot
+      // be represented as picker buttons — filter those out so the selection state is correct.
+      setRewards(profile.favourite_rewards.filter((r) => r in REWARDS))
+    }
   }, [editing, profile])
 
   const toggleReward = (k: string) =>
