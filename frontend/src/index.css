@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+/* ---------- BloomAI design tokens (see docs/design-system.md) ---------- */
+@theme {
+  --font-sans: ui-rounded, "Nunito", "Quicksand", "Segoe UI", system-ui, sans-serif;
+
+  --color-cream: #FFF8EC;      /* page background */
+  --color-card: #FFFFFF;
+  --color-ink: #2B3A42;        /* body text, 11:1 on cream */
+  --color-ink-soft: #52646E;   /* secondary text, 5.8:1 on cream */
+  --color-line: #E7DCC8;
+
+  --color-sage: #3E8E7E;       /* primary action (white text 4.0:1 at large size) */
+  --color-sage-dark: #2F6F62;  /* primary hover / text on light (6:1) */
+  --color-sage-light: #D6EDE6;
+  --color-sun: #F4A261;
+  --color-sun-light: #FDE7D2;
+  --color-sky: #6AA9D8;
+  --color-sky-light: #DCEBF7;
+  --color-berry: #D97B93;
+  --color-berry-light: #FADCE4;
+  --color-lilac: #9B8AD1;
+  --color-lilac-light: #E6E0F5;
+  --color-danger: #B5473A;     /* only for delete confirmations */
+
+  --radius-card: 1.5rem;
+  --radius-btn: 1.25rem;
+
+  --animate-pop: pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  --animate-float-up: floatUp 2.4s ease-out forwards;
+  --animate-breathe: breathe var(--breath-seconds, 8s) ease-in-out infinite;
+  --animate-wiggle: wiggle 0.6s ease-in-out;
+  --animate-fade-in: fadeIn 0.3s ease-out backwards;
+
+  @keyframes pop { 0% { transform: scale(0.3); opacity: 0 } 100% { transform: scale(1); opacity: 1 } }
+  @keyframes floatUp { 0% { transform: translateY(0) scale(0.6); opacity: 0 } 15% { opacity: 1 } 100% { transform: translateY(-70vh) scale(1.2) rotate(40deg); opacity: 0 } }
+  @keyframes breathe { 0%, 100% { transform: scale(0.6) } 50% { transform: scale(1) } }
+  @keyframes wiggle { 0%, 100% { transform: rotate(0) } 25% { transform: rotate(-8deg) } 75% { transform: rotate(8deg) } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+}
+
+html { font-size: 18px; }
+html[data-text-size="large"] { font-size: 21px; }
+html[data-text-size="xlarge"] { font-size: 24px; }
+
+body {
+  margin: 0;
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.45;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Visible focus for keyboard users */
+:focus-visible { outline: 4px solid var(--color-sky); outline-offset: 3px; border-radius: 0.75rem; }
+
+/* Calmer motion: respect OS setting AND the in-app toggle */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *::before, html[data-reduce-motion="true"] *::after {
+  animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important;
+}
