@@ -1,119 +1,138 @@
-"""AI Module for BloomAI
-Handles LLM praise generation and calm-down coaching responses with safe template fallbacks.
-Works completely offline without requiring any external API key.
+"""Praise and calm-reply generation (commits C6, C7).
+
+Order of preference for every message:
+  1. LLM reply that passes the safety filter       -> source "llm"
+  2. Fallback template that passes the filter       -> source "template"
+  3. A fixed default that is known to be safe       -> source "template"
+
+The safety decision itself (safe_mode) belongs to Member A's distress rule. The
+calm-reply path re-runs that rule as a second line of defence and never calls
+the LLM when it trips.
 """
-import json
-import os
 import random
-from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Optional
 
-TEMPLATES_DIR = Path(__file__).parent / "fallback_templates"
+from backend.app.ai import llm_client
+from backend.app.ai.prompts import (
+    CALM_SCHEMA, CALM_SYSTEM_PROMPT, NAME_PLACEHOLDER, PRAISE_SCHEMA,
+    PRAISE_SYSTEM_PROMPT, build_calm_user_prompt, build_praise_user_prompt,
+)
+from backend.app.ai.safety_filter import check_message, normalize
+from backend.app.ai.templates import (
+    CALM_EMOJIS, PRAISE_EVENTS, SUGGESTED_ACTIVITIES, fill,
+    pick_calm_template, pick_praise_template,
+)
+from backend.app.safety.distress_detector import evaluate_distress
 
-# Filtered/blocked words to guarantee child-safe tone
-BLOCKED_WORDS = {
-    "stupid", "lazy", "bad", "fail", "failure", "punish", "hate", "ugly", 
-    "worthless", "dumb", "hopeless", "terrible", "loser"
-}
+DEFAULT_NAME = "Friend"
+SAFE_DEFAULT_PRAISE = "Nice effort, {name}! Keep it up."
+SAFE_DEFAULT_CALM = ("Let's take a slow breath together, {name}.", "breathing")
+_TEMPLATE_ATTEMPTS = 4
+# Stand-in used when checking LLM text, so the real name never affects the check.
+_CHECK_NAME = "Sam"
 
-def _clean_and_validate(text: str) -> str:
-    """Ensures message is clean, safe, and child appropriate."""
-    words = text.lower().split()
-    for w in words:
-        clean_w = "".join(c for c in w if c.isalnum())
-        if clean_w in BLOCKED_WORDS:
-            return ""
-    if len(text) > 280:
-        return text[:277] + "..."
-    return text.strip()
+
+def _clean_name(child_name: Optional[str]) -> str:
+    name = " ".join((child_name or "").split())[:40]
+    name = name.replace("{", "").replace("}", "")
+    return name or DEFAULT_NAME
+
+
+def _accept_llm_message(raw: Optional[str], name: str) -> Optional[str]:
+    """Return the final message if the LLM text passes the filter, else None."""
+    msg = normalize(raw)
+    if not msg or msg.count(NAME_PLACEHOLDER) > 1:
+        return None
+    ok, _reason = check_message(msg.replace(NAME_PLACEHOLDER, _CHECK_NAME))
+    if not ok:
+        return None
+    return msg.replace(NAME_PLACEHOLDER, name)
+
+
+# ----------------------------- Praise -----------------------------
+
+def praise_from_template(
+    event: str, name: str, task_title: Optional[str], step_text: Optional[str],
+    streak: Optional[int], rng: Optional[random.Random] = None,
+) -> str:
+    event = event if event in PRAISE_EVENTS else "step_completed"
+    if event == "streak" and not (streak and streak >= 2):
+        event = "step_completed"
+    values = dict(name=name, task_title=task_title or "your task",
+                  step_text=step_text or "that step", streak=streak or 1)
+    for _ in range(_TEMPLATE_ATTEMPTS):
+        msg = fill(pick_praise_template(event, rng), **values)
+        if check_message(msg)[0]:
+            return msg
+    msg = fill(pick_praise_template("default", rng), **values)
+    if check_message(msg)[0]:
+        return msg
+    return fill(SAFE_DEFAULT_PRAISE, name=name)
 
 
 def generate_praise(
-    child_name: str = "Friend",
-    task_title: str = "your task",
-    step_text: str = "this step",
-    streak: int = 1,
-    event: str = "step_completed"
+    child_name: Optional[str] = DEFAULT_NAME,
+    task_title: Optional[str] = None,
+    step_text: Optional[str] = None,
+    streak: Optional[int] = None,
+    event: str = "step_completed",
 ) -> Dict[str, str]:
-    """
-    Generates effort-based, positive praise.
-    Falls back to curated templates.
-    """
-    child_name = child_name or "Friend"
-    task_title = task_title or "your task"
-    step_text = step_text or "this step"
-
-    template_file = TEMPLATES_DIR / "praise.json"
-    templates = [
-        "You kept going on that step, {child_name}. Nice effort!",
-        "Great focus on {task_title}, {child_name}!",
-        "Step by step, you are doing it, {child_name}!",
-        "Awesome determination! You finished {step_text}!"
-    ]
-    if template_file.exists():
-        try:
-            with open(template_file, "r", encoding="utf-8") as f:
-                templates = json.load(f)
-        except Exception:
-            pass
-
-    template = random.choice(templates)
-    msg = template.format(
-        child_name=child_name,
-        task_title=task_title,
-        step_text=step_text,
-        streak=streak
+    """Effort-based praise. Returns {"message", "source"}."""
+    name = _clean_name(child_name)
+    data = llm_client.generate_json(
+        PRAISE_SYSTEM_PROMPT,
+        build_praise_user_prompt(event, task_title, step_text, streak),
+        PRAISE_SCHEMA,
     )
-    safe_msg = _clean_and_validate(msg)
-    if not safe_msg:
-        safe_msg = f"Great work on that step, {child_name}! Keep it up!"
-
+    if data:
+        msg = _accept_llm_message(data.get("message"), name)
+        if msg:
+            return {"message": msg, "source": "llm"}
     return {
-        "message": safe_msg,
-        "source": "template"
+        "message": praise_from_template(event, name, task_title, step_text, streak),
+        "source": "template",
     }
+
+
+# ----------------------------- Calm reply -----------------------------
+
+def calm_from_template(key: str, name: str, rng: Optional[random.Random] = None) -> Dict[str, str]:
+    key = key if key in CALM_EMOJIS or key == "distress" else "default"
+    for _ in range(_TEMPLATE_ATTEMPTS):
+        tpl = pick_calm_template(key, rng)
+        msg = fill(tpl.get("message", ""), name=name)
+        activity = tpl.get("suggested_activity", "breathing")
+        if check_message(msg)[0] and activity in SUGGESTED_ACTIVITIES:
+            return {"message": msg, "suggested_activity": activity}
+    message, activity = SAFE_DEFAULT_CALM
+    return {"message": fill(message, name=name), "suggested_activity": activity}
 
 
 def generate_calm_reply(
-    child_name: str = "Friend",
+    child_name: Optional[str] = DEFAULT_NAME,
     emoji: str = "calm",
-    text: str = "",
-    focus_score: int = 50,
-    emotion_score: int = 50
+    text: Optional[str] = "",
+    focus_score: Optional[int] = 50,
+    emotion_score: Optional[int] = 50,
 ) -> Dict[str, str]:
-    """
-    Generates an empathetic calm-down response with a suggested activity (breathing, movement, stretching).
-    """
-    child_name = child_name or "Friend"
-    template_file = TEMPLATES_DIR / "calm_reply.json"
-    
-    fallback_map = {
-        "angry": ("It is completely normal to feel frustrated. Let's take three slow breaths together.", "breathing"),
-        "worried": (f"Big feelings can feel heavy, {child_name}. Shake out your hands and take a breath.", "movement"),
-        "tired": (f"Your brain worked hard today, {child_name}. Stretch your arms up and take a quick rest.", "stretching"),
-        "sad": (f"It is okay to feel down sometimes, {child_name}. You are doing your best.", "breathing"),
-        "calm": ("You are in a great calm space. Keep this gentle rhythm going!", "none"),
-        "happy": (f"Love seeing you smile, {child_name}! Keep that positive energy flowing!", "none"),
-    }
+    """Empathetic calm-down reply. Returns {"message", "suggested_activity", "source"}."""
+    name = _clean_name(child_name)
+    emoji = (emoji or "calm").lower()
 
-    if template_file.exists():
-        try:
-            with open(template_file, "r", encoding="utf-8") as f:
-                records = json.load(f)
-                for rec in records:
-                    if rec.get("condition") == emoji:
-                        msg = rec.get("message", "").format(child_name=child_name)
-                        return {
-                            "message": msg,
-                            "suggested_activity": rec.get("suggested_activity", "breathing"),
-                            "source": "template"
-                        }
-        except Exception:
-            pass
+    # Second line of defence: never send distress text to the LLM.
+    score_for_rule = emotion_score if emotion_score is not None else 50
+    if evaluate_distress(text, score_for_rule):
+        return {**calm_from_template("distress", name), "source": "template"}
 
-    msg, activity = fallback_map.get(emoji, ("Let's take a deep breath together.", "breathing"))
-    return {
-        "message": msg,
-        "suggested_activity": activity,
-        "source": "template"
-    }
+    data = llm_client.generate_json(
+        CALM_SYSTEM_PROMPT,
+        build_calm_user_prompt(emoji, text, focus_score, emotion_score),
+        CALM_SCHEMA,
+    )
+    if data:
+        msg = _accept_llm_message(data.get("message"), name)
+        activity = data.get("suggested_activity")
+        if msg and activity in SUGGESTED_ACTIVITIES and activity != "talk_to_adult":
+            return {"message": msg, "suggested_activity": activity, "source": "llm"}
+
+    return {**calm_from_template(emoji, name), "source": "template"}
