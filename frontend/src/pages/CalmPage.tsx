@@ -49,6 +49,7 @@ const ROUNDS = 5
 function Breathing() {
   const nav = useNavigate()
   const { reduceMotion } = useSettings()
+  const { speak, supported: voiceSupported } = useBloomiSpeech()
   const [running, setRunning] = useState(false)
   const [round, setRound] = useState(1)
   const [phase, setPhase] = useState(2)       // start "small" (out) so the first inhale grows
@@ -73,6 +74,14 @@ function Breathing() {
     tick()
     return () => clearTimeout(t)
   }, [running])
+
+  // Speak each phase label aloud as it changes (while running)
+  useEffect(() => {
+    if (running && voiceSupported) {
+      speak(CYCLE[phase].label)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, running])
 
   const cur = CYCLE[phase]
   return (
