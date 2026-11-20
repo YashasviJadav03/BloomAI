@@ -11,7 +11,10 @@ import type {
 import { ApiError } from './types'
 
 const MODE = (import.meta.env.VITE_API_MODE ?? 'mock') as 'mock' | 'real'
-const rawBase = (import.meta.env.VITE_API_BASE ?? '/api') as string
+let rawBase = (import.meta.env.VITE_API_BASE ?? '/api').trim()
+if (rawBase && !rawBase.startsWith('http://') && !rawBase.startsWith('https://') && !rawBase.startsWith('/')) {
+  rawBase = `https://${rawBase}`
+}
 const BASE = rawBase.endsWith('/api') ? rawBase : `${rawBase.replace(/\/+$/, '')}/api`
 export const isMockMode = MODE === 'mock'
 
@@ -29,10 +32,19 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   }
   if (!res.ok) {
     let detail = res.statusText
-    try { detail = (await res.json()).detail ?? detail } catch { /* not json */ }
+    try {
+      const data = await res.json()
+      detail = data.detail ?? detail
+    } catch { /* not json */ }
     throw new ApiError(res.status, typeof detail === 'string' ? detail : 'Something went wrong')
   }
-  return (res.status === 204 ? undefined : await res.json()) as T
+  if (res.status === 204) return undefined as T
+  const text = await res.text()
+  try {
+    return JSON.parse(text) as T
+  } catch {
+    throw new ApiError(res.status, 'Received non-JSON response from server')
+  }
 }
 const get = <T,>(p: string) => request<T>('GET', p)
 const post = <T,>(p: string, b?: unknown) => request<T>('POST', p, b ?? {})
