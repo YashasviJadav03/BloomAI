@@ -16,7 +16,7 @@ COPY . ./backend/
 
 # Copy ai module (lives one level up from backend/ in the repo)
 # The build context must be the repo root: docker build -f backend/Dockerfile .
-COPY ../ai ./ai/
+COPY ai/ ./ai/
 
 EXPOSE 8000
 

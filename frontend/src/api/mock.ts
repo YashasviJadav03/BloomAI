@@ -285,6 +285,7 @@ export async function mockRequest(method: string, path: string, body?: Body): Pr
   }
   if (is('GET', '/checkins')) { const days = Number(q.get('days') ?? 7); return db.checkins.filter((c) => Date.now() - new Date(c.at).getTime() < days * 864e5).map((c) => ({ ...summarise(c), safe_mode: c.label === 'distressed' })).reverse() }
   if (is('POST', '/praise')) return { message: PRAISE[Math.floor(Math.random() * PRAISE.length)].replace('{name}', b.child_name ?? 'friend'), source: 'template' }
+  if (is('POST', '/chat')) return { message: "I'm listening! You are doing wonderfully.", source: 'template' }
   if (is('POST', '/calm-reply')) { const r = CALM[b.emoji] ?? CALM.calm; return { message: r.message.replace('{name}', b.child_name ?? 'friend'), suggested_activity: r.suggested_activity, source: 'template' } }
   if (is('GET', '/safety/resources')) {
     return { message: 'It sounds like today is hard. Please talk to a trusted adult.', resources: [{ name: 'Childline (UK)', contact: '0800 1111' }, { name: 'Kids Helpline', contact: '1800 55 1800' }, { name: 'Crisis Text Line', contact: 'Text HOME to 741741' }] }

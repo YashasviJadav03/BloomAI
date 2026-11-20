@@ -11,7 +11,8 @@ import type {
 import { ApiError } from './types'
 
 const MODE = (import.meta.env.VITE_API_MODE ?? 'mock') as 'mock' | 'real'
-const BASE = (import.meta.env.VITE_API_BASE ?? '/api') as string
+const rawBase = (import.meta.env.VITE_API_BASE ?? '/api') as string
+const BASE = rawBase.endsWith('/api') ? rawBase : `${rawBase.replace(/\/+$/, '')}/api`
 export const isMockMode = MODE === 'mock'
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
